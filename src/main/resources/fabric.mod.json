@@ -8,7 +8,7 @@
     "gnembon, HerobaneNair"
   ],
   "contact": {},
-  "license": "MIT",
+  "license": "CC BY-NC 4.0",
   "icon": "assets/pvpbot/icon.png",
   "environment": "*",
   "entrypoints": {

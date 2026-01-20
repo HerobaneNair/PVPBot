@@ -20,7 +20,6 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.coordinates.RotationArgument;
 import net.minecraft.commands.arguments.coordinates.Vec3Argument;
 import net.minecraft.commands.arguments.item.ItemArgument;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -37,13 +36,11 @@ import java.util.function.Consumer;
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
 
-public class PlayerCommand
-{
+public class PlayerCommand {
     private static final SimpleCommandExceptionType NOT_FAKE =
             new SimpleCommandExceptionType(Component.literal("Only fake players can be targeted"));
 
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext ctx)
-    {
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext ctx) {
         dispatcher.register(
                 literal("player")
                         .requires(s -> s.hasPermission(2))
@@ -163,8 +160,7 @@ public class PlayerCommand
         );
     }
 
-    private static LiteralArgumentBuilder<CommandSourceStack> makeActionCommand(String name, ActionType type)
-    {
+    private static LiteralArgumentBuilder<CommandSourceStack> makeActionCommand(String name, ActionType type) {
         return literal(name)
                 .executes(manipulation(ap -> ap.stop(type)))
                 .then(literal("once")
@@ -180,13 +176,11 @@ public class PlayerCommand
 
 
     private static List<EntityPlayerMPFake> requireFakeTargets(CommandContext<CommandSourceStack> context)
-            throws CommandSyntaxException
-    {
+            throws CommandSyntaxException {
         Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "targets");
         List<EntityPlayerMPFake> fakes = new ArrayList<>();
 
-        for (ServerPlayer p : players)
-        {
+        for (ServerPlayer p : players) {
             if (!(p instanceof EntityPlayerMPFake fake))
                 throw NOT_FAKE.create();
             fakes.add(fake);
@@ -200,51 +194,43 @@ public class PlayerCommand
 
     private static int manipulate(CommandContext<CommandSourceStack> context,
                                   Consumer<EntityPlayerActionPack> action)
-            throws CommandSyntaxException
-    {
+            throws CommandSyntaxException {
         for (EntityPlayerMPFake fake : requireFakeTargets(context))
             action.accept(((ServerPlayerInterface) fake).getActionPack());
         return 1;
     }
 
-    private static Command<CommandSourceStack> manipulation(Consumer<EntityPlayerActionPack> action)
-    {
+    private static Command<CommandSourceStack> manipulation(Consumer<EntityPlayerActionPack> action) {
         return c -> manipulate(c, action);
     }
 
-    private static int kill(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
-    {
+    private static int kill(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         for (EntityPlayerMPFake fake : requireFakeTargets(context))
             fake.kill(fake.serverLevel());
         return 1;
     }
 
-    private static int disconnect(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
-    {
+    private static int disconnect(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         for (EntityPlayerMPFake fake : requireFakeTargets(context))
             fake.fakePlayerDisconnect(Component.literal(""));
         return 1;
     }
 
-    private static int shadow(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
-    {
+    private static int shadow(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         requireFakeTargets(context);
         return 0;
     }
 
-    private enum LookMode { EYES, FEET, CLOSEST }
+    private enum LookMode {EYES, FEET, CLOSEST}
 
     private static int lookUpon(CommandContext<CommandSourceStack> context, LookMode mode)
-            throws CommandSyntaxException
-    {
+            throws CommandSyntaxException {
         Entity target = EntityArgument.getEntity(context, "entity");
         Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "targets");
 
-        for (ServerPlayer player : players)
-        {
+        for (ServerPlayer player : players) {
             Vec3 eyePos = player.getEyePosition();
-            Vec3 lookTarget = switch (mode)
-            {
+            Vec3 lookTarget = switch (mode) {
                 case FEET -> target.position();
                 case EYES -> target.getEyePosition();
                 case CLOSEST -> closestPointToBox(eyePos, target.getBoundingBox());
@@ -259,8 +245,7 @@ public class PlayerCommand
         return players.size();
     }
 
-    private static Vec3 closestPointToBox(Vec3 eye, AABB box)
-    {
+    private static Vec3 closestPointToBox(Vec3 eye, AABB box) {
         return new Vec3(
                 Mth.clamp(eye.x, box.minX, box.maxX),
                 Mth.clamp(eye.y, box.minY, box.maxY),

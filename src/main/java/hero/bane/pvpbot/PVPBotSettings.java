@@ -11,12 +11,10 @@ import java.io.File;
 
 public final class PVPBotSettings {
 
-    private PVPBotSettings() {}
+    private PVPBotSettings() {
+    }
 
-    public static final File CONFIG_FILE = new File(
-            FabricLoader.getInstance().getConfigDir().toFile(),
-            "pvpbot.json"
-    );
+    public static final File CONFIG_FILE = new File(FabricLoader.getInstance().getConfigDir().toFile(), "pvpbot.json");
 
     public static void init() {
         RuleRegistry.register(PVPBotSettings.class);
@@ -54,9 +52,7 @@ public final class PVPBotSettings {
     public static boolean xpNoCooldown = false;
 
     public enum ExplosionNoDmgMode {
-        TRUE,
-        FALSE,
-        MOST;
+        TRUE, FALSE, MOST;
 
         public boolean enabled() {
             return this != FALSE;
@@ -67,9 +63,6 @@ public final class PVPBotSettings {
     public static ExplosionNoDmgMode explosionNoBlockDamage = ExplosionNoDmgMode.FALSE;
 
     public static boolean isCreativeFlying(Entity entity) {
-        return creativeNoClip
-                && entity instanceof Player player
-                && player.isCreative()
-                && player.getAbilities().flying;
+        return creativeNoClip && entity instanceof Player player && player.isCreative() && player.getAbilities().flying;
     }
 }

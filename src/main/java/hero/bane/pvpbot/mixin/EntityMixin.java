@@ -6,7 +6,6 @@ import hero.bane.pvpbot.PVPBotSettings;
 import hero.bane.pvpbot.fakeplayer.EntityPlayerMPFake;
 import net.minecraft.network.protocol.game.ClientboundSetPassengersPacket;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;

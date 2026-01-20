@@ -6,26 +6,23 @@ import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import hero.bane.pvpbot.util.DistanceCalculator;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.coordinates.Vec3Argument;
 import net.minecraft.world.phys.Vec3;
-import hero.bane.pvpbot.util.DistanceCalculator;
 
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
 
-public class DistanceCommand
-{
+public class DistanceCommand {
     @FunctionalInterface
-    private interface VecSupplier
-    {
+    private interface VecSupplier {
         Vec3 get(CommandContext<CommandSourceStack> c) throws CommandSyntaxException;
     }
 
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context)
-    {
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
         dispatcher.register(
                 literal("distance")
                         .then(literal("from")
@@ -100,13 +97,11 @@ public class DistanceCommand
         return arg;
     }
 
-    private static int run(CommandSourceStack source, Vec3 from, Vec3 to, int exp)
-    {
+    private static int run(CommandSourceStack source, Vec3 from, Vec3 to, int exp) {
         return DistanceCalculator.distance(source, from, to, exp);
     }
 
-    private static int runXZ(CommandSourceStack source, Vec3 from, Vec3 to, int exp)
-    {
+    private static int runXZ(CommandSourceStack source, Vec3 from, Vec3 to, int exp) {
         return DistanceCalculator.distance(
                 source,
                 new Vec3(from.x, 0, from.z),
@@ -115,8 +110,7 @@ public class DistanceCommand
         );
     }
 
-    private static int runY(CommandSourceStack source, Vec3 from, Vec3 to, int exp)
-    {
+    private static int runY(CommandSourceStack source, Vec3 from, Vec3 to, int exp) {
         return DistanceCalculator.distance(
                 source,
                 new Vec3(0, from.y, 0),

@@ -90,7 +90,7 @@ public abstract class PlayerMixin extends LivingEntity {
         }
     }
 
-    @Redirect(method = "aiStep",at = @At(value = "INVOKE", target = "java/util/List.add(Ljava/lang/Object;)Z"))
+    @Redirect(method = "aiStep", at = @At(value = "INVOKE", target = "java/util/List.add(Ljava/lang/Object;)Z"))
     public boolean processXpOrbCollisions(List<Entity> instance, Object e) {
         Entity entity = (Entity) e;
         if (PVPBotSettings.xpNoCooldown) {

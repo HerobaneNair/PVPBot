@@ -47,7 +47,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
-import net.minecraft.server.commands.TeleportCommand;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -63,11 +62,11 @@ public class EntityPlayerMPFake extends ServerPlayer {
     private static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private static final Set<String> spawning = new HashSet<>();
 
-    public Runnable fixStartingPosition = () -> {};
+    public Runnable fixStartingPosition = () -> {
+    };
     public boolean isAShadow;
     public Vec3 spawnPos;
     public double spawnYaw;
-    public double fakeFallDistance;
 
     public static void createFake(String username, MinecraftServer server, Vec3 pos, double yaw, double pitch, ResourceKey<Level> dimensionId, GameType gamemode, boolean flying) {
         ServerLevel worldIn = server.getLevel(dimensionId);

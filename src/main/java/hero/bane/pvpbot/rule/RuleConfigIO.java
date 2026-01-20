@@ -45,6 +45,7 @@ public final class RuleConfigIO {
 
         try (FileWriter writer = new FileWriter(file)) {
             GSON.toJson(json, writer);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 }

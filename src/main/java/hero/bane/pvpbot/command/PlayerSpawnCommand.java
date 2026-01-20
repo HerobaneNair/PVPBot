@@ -1,11 +1,11 @@
 package hero.bane.pvpbot.command;
 
-import hero.bane.pvpbot.fakeplayer.EntityPlayerMPFake;
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import hero.bane.pvpbot.fakeplayer.EntityPlayerMPFake;
 import net.minecraft.SharedConstants;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
@@ -31,10 +31,8 @@ import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
 import static net.minecraft.commands.SharedSuggestionProvider.suggest;
 
-public class PlayerSpawnCommand
-{
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext ctx)
-    {
+public class PlayerSpawnCommand {
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext ctx) {
         dispatcher.register(
                 literal("playerspawn")
                         .requires(s -> s.hasPermission(2))
@@ -57,7 +55,7 @@ public class PlayerSpawnCommand
                                                                                         )))))
                                                         .then(argument("cardinal", StringArgumentType.word())
                                                                 .suggests((c, b) -> suggest(
-                                                                        new String[]{"north","south","east","west","up","down","0 0"}, b))
+                                                                        new String[]{"north", "south", "east", "west", "up", "down", "0 0"}, b))
                                                                 .executes(PlayerSpawnCommand::spawn)
                                                                 .then(literal("in")
                                                                         .then(argument("gamemode", GameModeArgument.gameMode())
@@ -74,8 +72,7 @@ public class PlayerSpawnCommand
         );
     }
 
-    private static Set<String> getNameSuggestions(CommandSourceStack source)
-    {
+    private static Set<String> getNameSuggestions(CommandSourceStack source) {
         Set<String> names = new LinkedHashSet<>();
         names.add("Steve");
         names.add("Alex");
@@ -84,8 +81,7 @@ public class PlayerSpawnCommand
         return names;
     }
 
-    private static int spawn(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
-    {
+    private static int spawn(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         String name = StringArgumentType.getString(context, "player");
         CommandSourceStack source = context.getSource();
         MinecraftServer server = source.getServer();
@@ -95,8 +91,7 @@ public class PlayerSpawnCommand
         if (name.length() > (server.getPort() >= 0 ? SharedConstants.MAX_PLAYER_NAME_LENGTH : 32)) return 0;
 
         GameProfile profile = Objects.requireNonNull(server.getProfileCache()).get(name).orElse(null);
-        if (profile == null)
-        {
+        if (profile == null) {
             profile = new GameProfile(UUIDUtil.createOfflinePlayerUUID(name), name);
         }
 
@@ -134,21 +129,18 @@ public class PlayerSpawnCommand
         return 1;
     }
 
-    private static int maxNameLength(MinecraftServer server)
-    {
+    private static int maxNameLength(MinecraftServer server) {
         return server.getPort() >= 0 ? SharedConstants.MAX_PLAYER_NAME_LENGTH : 40;
     }
 
-    private static Vec2 cardinalRotation(String dir)
-    {
-        return switch (dir)
-        {
+    private static Vec2 cardinalRotation(String dir) {
+        return switch (dir) {
             case "south" -> new Vec2(0.0F, 0.0F);
-            case "west"  -> new Vec2(90.0F, 0.0F);
+            case "west" -> new Vec2(90.0F, 0.0F);
             case "north" -> new Vec2(180.0F, 0.0F);
-            case "east"  -> new Vec2(-90.0F, 0.0F);
-            case "up"    -> new Vec2(0.0F, -90.0F);
-            case "down"  -> new Vec2(0.0F, 90.0F);
+            case "east" -> new Vec2(-90.0F, 0.0F);
+            case "up" -> new Vec2(0.0F, -90.0F);
+            case "down" -> new Vec2(0.0F, 90.0F);
             default -> throw new IllegalStateException();
         };
     }

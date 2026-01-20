@@ -14,20 +14,19 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ExperienceOrb.class)
-public abstract class ExperienceOrbMixin extends Entity
-{
+public abstract class ExperienceOrbMixin extends Entity {
     @Shadow
     private int count;
 
-    public ExperienceOrbMixin(EntityType<?> type, Level world)
-    {
+    public ExperienceOrbMixin(EntityType<?> type, Level world) {
         super(type, world);
     }
 
     @Shadow
     protected abstract int repairPlayerItems(ServerPlayer player, int amount);
 
-    @Shadow public abstract int getValue();
+    @Shadow
+    public abstract int getValue();
 
     @Inject(method = "playerTouch", at = @At("HEAD"))
     private void addXP(Player player, CallbackInfo ci) {
