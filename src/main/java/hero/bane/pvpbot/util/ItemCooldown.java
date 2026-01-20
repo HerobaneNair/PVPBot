@@ -1,10 +1,10 @@
 package hero.bane.pvpbot.util;
 
-import hero.bane.pvpbot.mixin.CooldownInstanceInterface;
-import hero.bane.pvpbot.mixin.ItemCooldownsInterface;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import hero.bane.pvpbot.mixin.CooldownInstanceInterface;
+import hero.bane.pvpbot.mixin.ItemCooldownsInterface;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.item.ItemArgument;

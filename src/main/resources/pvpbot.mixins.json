@@ -4,6 +4,22 @@
   "package": "hero.bane.pvpbot.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "BlockItemMixin",
+    "ConnectionAccessor",
+    "CooldownInstanceInterface",
+    "EntityDataAccessorMixin",
+    "EntityMixin",
+    "ExperienceOrbMixin",
+    "ItemCooldownsInterface",
+    "LivingEntityAccessor",
+    "LivingEntityMixin",
+    "PlayerListMixin",
+    "PlayerMixin",
+    "RideCommandMixin",
+    "ServerExplosionMixin",
+    "ServerPlayerMixin",
+    "ShulkerBoxBlockEntityMixin",
+    "StandingAndWallBlockItemMixin"
   ],
   "injectors": {
     "defaultRequire": 1

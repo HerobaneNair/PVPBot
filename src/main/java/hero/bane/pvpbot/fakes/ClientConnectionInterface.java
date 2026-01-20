@@ -2,7 +2,6 @@ package hero.bane.pvpbot.fakes;
 
 import io.netty.channel.Channel;
 
-public interface ClientConnectionInterface
-{
+public interface ClientConnectionInterface {
     void setChannel(Channel channel);
 }
