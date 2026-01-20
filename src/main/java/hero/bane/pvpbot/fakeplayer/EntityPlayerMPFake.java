@@ -2,8 +2,6 @@ package hero.bane.pvpbot.fakeplayer;
 
 import com.mojang.authlib.GameProfile;
 import hero.bane.pvpbot.PVPBotSettings;
-import hero.bane.pvpbot.action.EntityPlayerActionPack;
-import hero.bane.pvpbot.fakes.ServerPlayerInterface;
 import hero.bane.pvpbot.mixin.LivingEntityAccessor;
 import it.unimi.dsi.fastutil.doubles.DoubleDoubleImmutablePair;
 import net.minecraft.advancements.CriteriaTriggers;
@@ -15,7 +13,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.game.ClientboundEntityPositionSyncPacket;
-import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundRotateHeadPacket;
 import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
 import net.minecraft.resources.ResourceKey;
@@ -49,8 +46,11 @@ import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
+import net.minecraft.server.commands.TeleportCommand;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -69,20 +69,20 @@ public class EntityPlayerMPFake extends ServerPlayer {
     public double spawnYaw;
     public double fakeFallDistance;
 
-    public static boolean createFake(String username, MinecraftServer server, Vec3 pos, double yaw, double pitch, ResourceKey<Level> dimensionId, GameType gamemode, boolean flying) {
+    public static void createFake(String username, MinecraftServer server, Vec3 pos, double yaw, double pitch, ResourceKey<Level> dimensionId, GameType gamemode, boolean flying) {
         ServerLevel worldIn = server.getLevel(dimensionId);
 
         GameProfileCache.setUsesAuthentication(false);
         GameProfile gameprofile;
         try {
-            gameprofile = server.getProfileCache().get(username).orElse(null);
+            gameprofile = Objects.requireNonNull(server.getProfileCache()).get(username).orElse(null);
         } finally {
             GameProfileCache.setUsesAuthentication(server.isDedicatedServer() && server.usesAuthentication());
         }
 
         if (gameprofile == null) {
             if (!PVPBotSettings.allowSpawningOfflinePlayers) {
-                return false;
+                return;
             } else {
                 gameprofile = new GameProfile(UUIDUtil.createOfflinePlayerUUID(username), username);
             }
@@ -116,7 +116,7 @@ public class EntityPlayerMPFake extends ServerPlayer {
             instance.teleportTo(worldIn, pos.x, pos.y, pos.z, Set.of(), (float) yaw, (float) pitch, true);
             instance.setHealth(20.0F);
             instance.unsetRemoved();
-            instance.getAttribute(Attributes.STEP_HEIGHT).setBaseValue(0.6F);
+            Objects.requireNonNull(instance.getAttribute(Attributes.STEP_HEIGHT)).setBaseValue(0.6F);
             instance.gameMode.changeGameModeForPlayer(gamemode);
             instance.spawnPos = pos;
             instance.spawnYaw = yaw;
@@ -145,46 +145,10 @@ public class EntityPlayerMPFake extends ServerPlayer {
             });
         }, server);
 
-        return true;
     }
 
     private static CompletableFuture<Optional<GameProfile>> fetchGameProfile(final String name) {
         return SkullBlockEntity.fetchGameProfile(name);
-    }
-
-    public static EntityPlayerMPFake createShadow(MinecraftServer server, ServerPlayer player) {
-        player.getServer().getPlayerList().remove(player);
-        player.connection.disconnect(Component.translatable("multiplayer.disconnect.duplicate_login"));
-
-        ServerLevel worldIn = player.serverLevel();
-        GameProfile gameprofile = player.getGameProfile();
-
-        EntityPlayerMPFake playerShadow = new EntityPlayerMPFake(server, worldIn, gameprofile, player.clientInformation(), true);
-        playerShadow.setChatSession(player.getChatSession());
-
-        server.getPlayerList().placeNewPlayer(
-                new FakeClientConnection(PacketFlow.SERVERBOUND),
-                playerShadow,
-                new CommonListenerCookie(gameprofile, 0, player.clientInformation(), true)
-        );
-
-        playerShadow.setHealth(player.getHealth());
-        playerShadow.connection.teleport(player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
-        playerShadow.gameMode.changeGameModeForPlayer(player.gameMode.getGameModeForPlayer());
-
-        ((ServerPlayerInterface) playerShadow).getActionPack().copyFrom(((ServerPlayerInterface) player).getActionPack());
-
-        playerShadow.getAttribute(Attributes.STEP_HEIGHT).setBaseValue(0.6F);
-        playerShadow.entityData.set(DATA_PLAYER_MODE_CUSTOMISATION, player.getEntityData().get(DATA_PLAYER_MODE_CUSTOMISATION));
-
-        server.getPlayerList().broadcastAll(
-                new ClientboundRotateHeadPacket(playerShadow, (byte) (player.yHeadRot * 256 / 360)),
-                playerShadow.level().dimension()
-        );
-        server.getPlayerList().broadcastAll(new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, playerShadow));
-
-        playerShadow.getAbilities().flying = player.getAbilities().flying;
-        return playerShadow;
     }
 
     public static EntityPlayerMPFake respawnFake(MinecraftServer server, ServerLevel level, GameProfile profile, ClientInformation cli) {
@@ -227,7 +191,7 @@ public class EntityPlayerMPFake extends ServerPlayer {
 
     @Override
     public void tick() {
-        if (this.getServer().getTickCount() % 10 == 0) {
+        if (Objects.requireNonNull(this.getServer()).getTickCount() % 10 == 0) {
             this.connection.resetPosition();
             this.serverLevel().getChunkSource().move(this);
         }
@@ -263,7 +227,7 @@ public class EntityPlayerMPFake extends ServerPlayer {
     }
 
     @Override
-    public String getIpAddress() {
+    public @NotNull String getIpAddress() {
         return "127.0.0.1";
     }
 

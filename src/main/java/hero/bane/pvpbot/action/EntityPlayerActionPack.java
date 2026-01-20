@@ -15,20 +15,22 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.decoration.ItemFrame;
+import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.entity.vehicle.Minecart;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.PathNavigationRegion;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.Node;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.level.pathfinder.PathFinder;
+import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
 import net.minecraft.world.phys.*;
 
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class EntityPlayerActionPack {
     public final ServerPlayer player;
@@ -204,6 +206,7 @@ public class EntityPlayerActionPack {
     }
 
     public void onUpdate() {
+
         double y = player.getY();
         double dy = y - lastY;
 
@@ -290,20 +293,20 @@ public class EntityPlayerActionPack {
     }
 
     private void dropItemFromSlot(int slot, boolean dropAll) {
-        Inventory inv = player.getInventory(); // getInventory;
+        Inventory inv = player.getInventory();
         if (!inv.getItem(slot).isEmpty())
             player.drop(inv.removeItem(slot,
                     dropAll ? inv.getItem(slot).getCount() : 1
-            ), false, true); // scatter, keep owner
+            ), false, true);
     }
 
     public void drop(int selectedSlot, boolean dropAll) {
-        Inventory inv = player.getInventory(); // getInventory;
-        if (selectedSlot == -2) // all
+        Inventory inv = player.getInventory();
+        if (selectedSlot == -2)
         {
             for (int i = inv.getContainerSize(); i >= 0; i--)
                 dropItemFromSlot(i, dropAll);
-        } else // one slot
+        } else
         {
             if (selectedSlot == -1)
                 selectedSlot = inv.getSelectedSlot();

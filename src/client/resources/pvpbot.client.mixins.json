@@ -1,9 +1,11 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "hero.bane.pvpbot.mixin.client",
+  "package": "hero.bane.pvpbot.client.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
+    "LevelRendererMixin",
+    "Minecraft_tickMixin"
   ],
   "injectors": {
     "defaultRequire": 1

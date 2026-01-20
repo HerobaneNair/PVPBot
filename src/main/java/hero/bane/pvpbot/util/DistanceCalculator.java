@@ -28,10 +28,10 @@ public class DistanceCalculator
                         " and " + posToString(pos2) + ":"
         ));
 
-        res.add(Component.literal("  - Cylindrical: " + String.format("%.2f", cylindrical)));
-        res.add(Component.literal("  - Manhattan: " + String.format("%.1f", manhattan)));
-        res.add(Component.literal("  - Spherical: " + String.format("%.2f", spherical)));
-        res.add(Component.literal("\n> Stored: " + result));
+        res.add(Component.literal(" - Spherical: " + String.format("%.2f", spherical)));
+        res.add(Component.literal("   - Cylindrical: " + String.format("%.2f", cylindrical)));
+        res.add(Component.literal("   - Manhattan: " + String.format("%.1f", manhattan)));
+        res.add(Component.literal("\n> Output: " + result));
 
         return res;
     }
@@ -50,7 +50,12 @@ public class DistanceCalculator
         int scale = exponent <= 0 ? 1 : (int) Math.pow(10, exponent);
         int result = (int) Math.round(dist * scale);
 
-        SimpleMessenger.send(source, findDistanceBetweenTwoPoints(pos1, pos2, result));
+        List<Component> distances = findDistanceBetweenTwoPoints(pos1, pos2, result);
+
+        for (Component c : distances)
+        {
+            source.sendSuccess(() -> c, false);
+        }
 
         return result;
     }

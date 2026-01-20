@@ -54,7 +54,23 @@ public class PlayerSpawnCommand
                                                                                         .then(argument("dimension",
                                                                                                 DimensionArgument.dimension())
                                                                                                 .executes(PlayerSpawnCommand::spawn)
-                                                                                        )))))))))
+                                                                                        )))))
+                                                        .then(argument("cardinal", StringArgumentType.word())
+                                                                .suggests((c, b) -> suggest(
+                                                                        new String[]{"north","south","east","west","up","down","0 0"}, b))
+                                                                .executes(PlayerSpawnCommand::spawn)
+                                                                .then(literal("in")
+                                                                        .then(argument("gamemode", GameModeArgument.gameMode())
+                                                                                .executes(PlayerSpawnCommand::spawn)
+                                                                                .then(literal("on")
+                                                                                        .then(argument("dimension",
+                                                                                                DimensionArgument.dimension())
+                                                                                                .executes(PlayerSpawnCommand::spawn)
+                                                                                        )))))
+                                                )
+                                        )
+                                )
+                        )
         );
     }
 
@@ -76,7 +92,7 @@ public class PlayerSpawnCommand
         PlayerList manager = server.getPlayerList();
 
         if (manager.getPlayerByName(name) != null) return 0;
-        if (name.length() > maxNameLength(server)) return 0;
+        if (name.length() > (server.getPort() >= 0 ? SharedConstants.MAX_PLAYER_NAME_LENGTH : 32)) return 0;
 
         GameProfile profile = Objects.requireNonNull(server.getProfileCache()).get(name).orElse(null);
         if (profile == null)
@@ -88,9 +104,12 @@ public class PlayerSpawnCommand
                 ? Vec3Argument.getVec3(context, "position")
                 : source.getPosition();
 
-        Vec2 rot = context.getNodes().stream().anyMatch(n -> n.getNode().getName().equals("direction"))
-                ? RotationArgument.getRotation(context, "direction").getRotation(source)
-                : source.getRotation();
+        Vec2 rot =
+                context.getNodes().stream().anyMatch(n -> n.getNode().getName().equals("direction"))
+                        ? RotationArgument.getRotation(context, "direction").getRotation(source)
+                        : context.getNodes().stream().anyMatch(n -> n.getNode().getName().equals("cardinal"))
+                        ? cardinalRotation(StringArgumentType.getString(context, "cardinal"))
+                        : source.getRotation();
 
         GameType mode = context.getNodes().stream().anyMatch(n -> n.getNode().getName().equals("gamemode"))
                 ? GameModeArgument.getGameMode(context, "gamemode")
@@ -118,5 +137,19 @@ public class PlayerSpawnCommand
     private static int maxNameLength(MinecraftServer server)
     {
         return server.getPort() >= 0 ? SharedConstants.MAX_PLAYER_NAME_LENGTH : 40;
+    }
+
+    private static Vec2 cardinalRotation(String dir)
+    {
+        return switch (dir)
+        {
+            case "south" -> new Vec2(0.0F, 0.0F);
+            case "west"  -> new Vec2(90.0F, 0.0F);
+            case "north" -> new Vec2(180.0F, 0.0F);
+            case "east"  -> new Vec2(-90.0F, 0.0F);
+            case "up"    -> new Vec2(0.0F, -90.0F);
+            case "down"  -> new Vec2(0.0F, 90.0F);
+            default -> throw new IllegalStateException();
+        };
     }
 }
