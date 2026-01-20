@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "pvpbot",
+  "version": "${version}",
+  "name": "PVPBot",
+  "description": "HerosEvilOptimizer",
+  "authors": [],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/pvpbot/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "hero.bane.pvpbot.client.PvpbotClient"
+    ],
+    "main": [
+      "hero.bane.pvpbot.Pvpbot"
+    ]
+  },
+  "mixins": [
+    "pvpbot.mixins.json",
+    {
+      "config": "pvpbot.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
