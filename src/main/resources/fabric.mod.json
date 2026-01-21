@@ -4,7 +4,9 @@
   "version": "${version}",
   "name": "PVPBot",
   "description": "HerosEvilOptimizer",
-  "authors": [],
+  "authors": [
+    "HerobaneNair"
+  ],
   "contact": {},
   "license": "MIT",
   "icon": "assets/pvpbot/icon.png",
