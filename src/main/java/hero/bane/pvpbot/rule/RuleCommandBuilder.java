@@ -5,6 +5,7 @@ import com.mojang.brigadier.builder.ArgumentBuilder;
 import hero.bane.pvpbot.PVPBotSettings;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
 
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
@@ -26,7 +27,9 @@ public final class RuleCommandBuilder {
                     if (rule == null) return 0;
 
                     c.getSource().sendSuccess(
-                            () -> Component.literal(rule.name + " = " + rule.get() + "\n" + rule.description),
+                            () -> Component.literal(rule.name + " = " + rule.get() + "\n")
+                                    .append(Component.literal(rule.description)
+                                            .withStyle(s -> s.withColor(TextColor.fromRgb(0xFFFFAA)))),
                             false
                     );
                     return 1;
@@ -116,7 +119,9 @@ public final class RuleCommandBuilder {
 
     private static void reply(CommandSourceStack src, RuleEntry rule, Object v, boolean perm) {
         src.sendSuccess(
-                () -> Component.literal(rule.name + " = " + v + (perm ? " [perm]" : " [temp]")),
+                () -> Component.literal(rule.name + " = " + v)
+                        .append(Component.literal(perm ? " [perm]" : " [temp]")
+                                .withStyle(s -> s.withColor(TextColor.fromRgb((perm ? 0xAAFFFF : 0xFFFFAA))))),
                 false
         );
     }

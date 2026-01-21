@@ -63,14 +63,15 @@ public abstract class PlayerMixin extends LivingEntity {
     }
 
     @Redirect(
-            method = "attack",
+            method = "causeExtraKnockback",
             at = @At(
                     value = "FIELD",
                     target = "Lnet/minecraft/world/entity/Entity;hurtMarked:Z",
-                    ordinal = 0,
-                    opcode = Opcodes.GETFIELD)
+                    ordinal = 0
+            )
     )
-    private boolean velocityModifiedAndNotCarpetFakePlayer(Entity target) {
+    private boolean velocityModifiedAndNotCarpetFakePlayer(Entity target)
+    {
         return target.hurtMarked && !(target instanceof EntityPlayerMPFake);
     }
 

@@ -21,8 +21,11 @@ import net.minecraft.commands.arguments.coordinates.RotationArgument;
 import net.minecraft.commands.arguments.coordinates.Vec3Argument;
 import net.minecraft.commands.arguments.item.ItemArgument;
 import net.minecraft.core.Direction;
+import net.minecraft.network.DisconnectionDetails;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.PermissionSet;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
@@ -43,7 +46,7 @@ public class PlayerCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext ctx) {
         dispatcher.register(
                 literal("player")
-                        .requires(s -> s.hasPermission(2))
+                        .requires(s -> !s.isPlayer() || s.getServer().getPlayerList().isOp(s.getPlayer().nameAndId()))
                         .then(argument("targets", EntityArgument.players())
 
                                 .then(literal("stop")
@@ -75,18 +78,13 @@ public class PlayerCommand {
 
                                 .then(literal("kill")
                                         .executes(PlayerCommand::kill))
-
                                 .then(literal("disconnect")
                                         .executes(PlayerCommand::disconnect))
-
-                                .then(literal("shadow")
-                                        .executes(PlayerCommand::shadow))
 
                                 .then(literal("mount")
                                         .executes(manipulation(ap -> ap.mount(true)))
                                         .then(literal("anything")
                                                 .executes(manipulation(ap -> ap.mount(false)))))
-
                                 .then(literal("dismount")
                                         .executes(manipulation(EntityPlayerActionPack::dismount)))
 
@@ -206,7 +204,7 @@ public class PlayerCommand {
 
     private static int kill(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         for (EntityPlayerMPFake fake : requireFakeTargets(context))
-            fake.kill(fake.serverLevel());
+            fake.kill(fake.level());
         return 1;
     }
 
@@ -216,10 +214,6 @@ public class PlayerCommand {
         return 1;
     }
 
-    private static int shadow(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        requireFakeTargets(context);
-        return 0;
-    }
 
     private enum LookMode {EYES, FEET, CLOSEST}
 

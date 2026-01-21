@@ -3,12 +3,10 @@
   "id": "pvpbot",
   "version": "${version}",
   "name": "PVPBot",
-  "description": "Carpet PVP without any extra carpet",
-  "authors": [
-    "gnembon, HerobaneNair"
-  ],
+  "description": "HerosEvilOptimizer",
+  "authors": [],
   "contact": {},
-  "license": "CC BY-NC 4.0",
+  "license": "MIT",
   "icon": "assets/pvpbot/icon.png",
   "environment": "*",
   "entrypoints": {
@@ -27,12 +25,8 @@
     }
   ],
   "depends": {
-    "fabricloader": ">=0.15.11",
+    "fabricloader": ">=${loader_version}",
     "fabric-api": "*",
     "minecraft": "${minecraft_version}"
-  },
-  "breaks": {
-    "carpet": "*",
-    "carpetpvp": "*"
   }
 }

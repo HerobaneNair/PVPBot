@@ -30,7 +30,7 @@ public abstract class ExperienceOrbMixin extends Entity {
 
     @Inject(method = "playerTouch", at = @At("HEAD"))
     private void addXP(Player player, CallbackInfo ci) {
-        if (PVPBotSettings.xpNoCooldown && !level().isClientSide) {
+        if (PVPBotSettings.xpNoCooldown && !level().isClientSide()) {
             player.takeXpDelay = 0;
             // reducing the count to 1 and leaving vanilla to deal with it
             while (this.count > 1) {

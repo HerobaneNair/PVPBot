@@ -36,17 +36,17 @@ public abstract class EntityMixin {
     @Inject(method = "isLocalInstanceAuthoritative", at = @At("HEAD"), cancellable = true)
     private void isFakePlayer(CallbackInfoReturnable<Boolean> cir) {
         if (getControllingPassenger() instanceof EntityPlayerMPFake)
-            cir.setReturnValue(!level.isClientSide);
+            cir.setReturnValue(!level.isClientSide());
     }
 
     @Inject(method = "removePassenger", at = @At("TAIL"))
     private void removePassengerForce(Entity passenger, CallbackInfo ci) {
         if (!PVPBotSettings.editablePlayerNbt) return;
 
-        if (!passenger.level().isClientSide && passenger instanceof ServerPlayer sp)
+        if (!passenger.level().isClientSide() && passenger instanceof ServerPlayer sp)
             sp.connection.send(new ClientboundSetPassengersPacket(passenger));
 
-        if (!self.level().isClientSide && self instanceof ServerPlayer sp)
+        if (!self.level().isClientSide() && self instanceof ServerPlayer sp)
             sp.connection.send(new ClientboundSetPassengersPacket(self));
     }
 
@@ -54,15 +54,15 @@ public abstract class EntityMixin {
     private void addPassengerForce(Entity passenger, CallbackInfo ci) {
         if (!PVPBotSettings.editablePlayerNbt) return;
 
-        if (!passenger.level().isClientSide && passenger instanceof ServerPlayer sp)
+        if (!passenger.level().isClientSide() && passenger instanceof ServerPlayer sp)
             sp.connection.send(new ClientboundSetPassengersPacket(passenger));
 
-        if (!self.level().isClientSide && self instanceof ServerPlayer sp)
+        if (!self.level().isClientSide() && self instanceof ServerPlayer sp)
             sp.connection.send(new ClientboundSetPassengersPacket(self));
     }
 
     @WrapOperation(
-            method = "startRiding(Lnet/minecraft/world/entity/Entity;Z)Z",
+            method = "startRiding(Lnet/minecraft/world/entity/Entity;ZZ)Z",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/entity/EntityType;canSerialize()Z"

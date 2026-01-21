@@ -18,6 +18,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(PlayerList.class)
@@ -26,13 +27,12 @@ public abstract class PlayerListMixin {
     @Shadow @Final
     private MinecraftServer server;
 
-    @Inject(
-            method = "load",
-            at = @At(value = "RETURN", shift = At.Shift.BEFORE)
-    )
-    private void fixStartingPos(ServerPlayer player, CallbackInfoReturnable<CompoundTag> cir) {
-        if (player instanceof EntityPlayerMPFake fake) {
-            fake.fixStartingPosition.run();
+    @Inject(method = "placeNewPlayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;level()Lnet/minecraft/server/level/ServerLevel;"))
+    private void fixStartingPos(Connection connection, ServerPlayer serverPlayer, CommonListenerCookie commonListenerCookie, CallbackInfo ci)
+    {
+        if (serverPlayer instanceof EntityPlayerMPFake)
+        {
+            ((EntityPlayerMPFake) serverPlayer).fixStartingPosition.run();
         }
     }
 

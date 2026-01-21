@@ -1,6 +1,5 @@
 package hero.bane.pvpbot.command;
 
-import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -17,6 +16,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.OldUsersConverter;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
@@ -24,18 +25,19 @@ import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.LinkedHashSet;
-import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
 import static net.minecraft.commands.SharedSuggestionProvider.suggest;
 
 public class PlayerSpawnCommand {
+
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext ctx) {
         dispatcher.register(
                 literal("playerspawn")
-                        .requires(s -> s.hasPermission(2))
+                        .requires(s -> !s.isPlayer() || s.getServer().getPlayerList().isOp(s.getPlayer().nameAndId()))
                         .then(argument("player", StringArgumentType.word())
                                 .suggests((c, b) -> suggest(getNameSuggestions(c.getSource()), b))
                                 .executes(PlayerSpawnCommand::spawn)
@@ -85,19 +87,33 @@ public class PlayerSpawnCommand {
         String name = StringArgumentType.getString(context, "player");
         CommandSourceStack source = context.getSource();
         MinecraftServer server = source.getServer();
-        PlayerList manager = server.getPlayerList();
+        PlayerList playerList = server.getPlayerList();
 
-        if (manager.getPlayerByName(name) != null) return 0;
-        if (name.length() > (server.getPort() >= 0 ? SharedConstants.MAX_PLAYER_NAME_LENGTH : 32)) return 0;
+        if (EntityPlayerMPFake.isSpawningPlayer(name)) return 0;
+        if (playerList.getPlayerByName(name) != null) return 0;
+        if (name.length() > maxNameLength(server)) return 0;
 
-        GameProfile profile = Objects.requireNonNull(server.getProfileCache()).get(name).orElse(null);
-        if (profile == null) {
-            profile = new GameProfile(UUIDUtil.createOfflinePlayerUUID(name), name);
+        UUID uuid = OldUsersConverter.convertMobOwnerIfNecessary(server, name);
+        if (uuid == null) {
+            uuid = UUIDUtil.createOfflinePlayerUUID(name);
+        }
+
+        var profile = server.services().nameToIdCache().get(uuid).orElse(null);
+        if (profile != null && playerList.getBans().isBanned(profile)) return 0;
+
+        if (playerList.isUsingWhitelist()
+                && profile != null
+                && !playerList.isWhiteListed(profile)
+                && source.isPlayer()
+                && !playerList.isOp(source.getPlayer().nameAndId())) {
+            return 0;
         }
 
         Vec3 pos = context.getNodes().stream().anyMatch(n -> n.getNode().getName().equals("position"))
                 ? Vec3Argument.getVec3(context, "position")
                 : source.getPosition();
+
+        if (!Level.isInSpawnableBounds(BlockPos.containing(pos))) return 0;
 
         Vec2 rot =
                 context.getNodes().stream().anyMatch(n -> n.getNode().getName().equals("direction"))
@@ -114,7 +130,16 @@ public class PlayerSpawnCommand {
                 ? DimensionArgument.getDimension(context, "dimension").dimension()
                 : source.getLevel().dimension();
 
-        if (!Level.isInSpawnableBounds(BlockPos.containing(pos))) return 0;
+        boolean flying;
+        if (mode == GameType.SPECTATOR) {
+            flying = true;
+        } else if (mode.isSurvival()) {
+            flying = false;
+        } else if (source.getEntity() instanceof ServerPlayer p) {
+            flying = p.getAbilities().flying;
+        } else {
+            flying = false;
+        }
 
         EntityPlayerMPFake.createFake(
                 name,
@@ -124,8 +149,9 @@ public class PlayerSpawnCommand {
                 rot.x,
                 dim,
                 mode,
-                true
+                flying
         );
+
         return 1;
     }
 

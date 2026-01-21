@@ -2,6 +2,7 @@ package hero.bane.pvpbot.util;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
@@ -25,10 +26,12 @@ public class DistanceCalculator {
                         " and " + posToString(pos2) + ":"
         ));
 
-        res.add(Component.literal(" - Spherical: " + String.format("%.2f", spherical)));
+        res.add(Component.literal(" - Spherical: " + String.format("%.2f", spherical))
+                .withStyle(style -> style.withColor(TextColor.fromRgb(0xAAFFFF))));
         res.add(Component.literal("   - Cylindrical: " + String.format("%.2f", cylindrical)));
         res.add(Component.literal("   - Manhattan: " + String.format("%.1f", manhattan)));
-        res.add(Component.literal("\n> Output: " + result));
+        res.add(Component.literal("> Output: " + result)
+                .withStyle(style -> style.withColor(TextColor.fromRgb(0xFFFFAA))));
 
         return res;
     }
