@@ -333,18 +333,6 @@ public class EntityPlayerActionPack {
             ), false, true);
     }
 
-    public void drop(int selectedSlot, boolean dropAll) {
-        Inventory inv = player.getInventory();
-        if (selectedSlot == -2) {
-            for (int i = inv.getContainerSize(); i >= 0; i--)
-                dropItemFromSlot(i, dropAll);
-        } else {
-            if (selectedSlot == -1)
-                selectedSlot = inv.getSelectedSlot();
-            dropItemFromSlot(selectedSlot, dropAll);
-        }
-    }
-
     public void setSlot(int slot) {
         player.getInventory().setSelectedSlot(slot - 1);
         player.connection.send(new ClientboundSetHeldSlotPacket(slot - 1));

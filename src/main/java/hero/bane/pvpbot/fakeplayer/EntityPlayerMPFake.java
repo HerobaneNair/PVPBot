@@ -43,12 +43,6 @@ import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.item.Item.Properties;
-import net.minecraft.world.entity.ai.behavior.SpearAttack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.component.KineticWeapon;
-import net.minecraft.world.item.component.Weapon;
-import net.minecraft.world.item.component.AttackRange;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -212,15 +206,13 @@ public class EntityPlayerMPFake extends ServerPlayer {
         kill(Component.literal("Killed"));
     }
 
-    public void fakePlayerDisconnect(Component reason)
-    {
+    public void fakePlayerDisconnect(Component reason) {
         this.level().getServer().schedule(new TickTask(this.level().getServer().getTickCount(), () ->
                 this.connection.onDisconnect(new DisconnectionDetails(reason))
         ));
     }
 
-    public void kill(Component reason)
-    {
+    public void kill(Component reason) {
         shakeOff();
 
         if (reason.getContents() instanceof TranslatableContents text
@@ -270,8 +262,7 @@ public class EntityPlayerMPFake extends ServerPlayer {
     }
 
     @Override
-    public void die(DamageSource cause)
-    {
+    public void die(DamageSource cause) {
         shakeOff();
         super.die(cause);
 
@@ -311,8 +302,7 @@ public class EntityPlayerMPFake extends ServerPlayer {
     }
 
     @Override
-    public boolean isInvulnerableTo(ServerLevel serverLevel, DamageSource damageSource)
-    {
+    public boolean isInvulnerableTo(ServerLevel serverLevel, DamageSource damageSource) {
         return super.isInvulnerableTo(serverLevel, damageSource)
                 || this.isChangingDimension() && !damageSource.is(DamageTypes.ENDER_PEARL);
     }
