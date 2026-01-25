@@ -1,6 +1,8 @@
 package hero.bane.pvpbot.mixin;
 
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
@@ -22,4 +24,10 @@ public interface LivingEntityAccessor {
 
     @Invoker("getEffectiveGravity")
     double invokeGetEffectiveGravity();
+
+    @Accessor("recentKineticEnemies")
+    Object2LongMap<Entity> getRecentKineticEnemies();
+
+    @Accessor("recentKineticEnemies")
+    void setRecentKineticEnemies(Object2LongMap<Entity> map);
 }

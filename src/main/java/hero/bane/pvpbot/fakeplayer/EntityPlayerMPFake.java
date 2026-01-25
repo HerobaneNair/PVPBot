@@ -40,12 +40,18 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.portal.TeleportTransition;
+import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.item.Item.Properties;
+import net.minecraft.world.entity.ai.behavior.SpearAttack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.KineticWeapon;
+import net.minecraft.world.item.component.Weapon;
+import net.minecraft.world.item.component.AttackRange;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Timer;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -116,6 +122,18 @@ public class EntityPlayerMPFake extends ServerPlayer {
             instance.getAttribute(Attributes.STEP_HEIGHT).setBaseValue(0.6F);
             instance.gameMode.changeGameModeForPlayer(gamemode);
             instance.spawnPos = pos;
+            instance.setRespawnPosition(
+                    new ServerPlayer.RespawnConfig(
+                            LevelData.RespawnData.of(
+                                    dimensionId,
+                                    BlockPos.containing(pos),
+                                    (float) yaw,
+                                    (float) pitch
+                            ),
+                            true
+                    ),
+                    false
+            );
             instance.spawnYaw = yaw;
             server.getPlayerList().broadcastAll(new ClientboundRotateHeadPacket(instance, (byte) (instance.yHeadRot * 256 / 360)), dimensionId);//instance.dimension);
             server.getPlayerList().broadcastAll(ClientboundEntityPositionSyncPacket.of(instance), dimensionId);//instance.dimension);
@@ -201,16 +219,17 @@ public class EntityPlayerMPFake extends ServerPlayer {
         ));
     }
 
-    public void kill(Component reason) {
+    public void kill(Component reason)
+    {
         shakeOff();
 
-        if (reason.getContents() instanceof TranslatableContents text && text.getKey().equals("multiplayer.disconnect.duplicate_login")) {
+        if (reason.getContents() instanceof TranslatableContents text
+                && text.getKey().equals("multiplayer.disconnect.duplicate_login")) {
             this.connection.onDisconnect(new DisconnectionDetails(reason));
-        } else {
-            this.level().getServer().schedule(new TickTask(this.level().getServer().getTickCount(), () -> {
-                this.connection.onDisconnect(new DisconnectionDetails(reason));
-            }));
+            return;
         }
+
+        this.hurt(this.level().damageSources().fellOutOfWorld(), Float.MAX_VALUE);
     }
 
     @Override
@@ -256,27 +275,25 @@ public class EntityPlayerMPFake extends ServerPlayer {
         shakeOff();
         super.die(cause);
 
-        MinecraftServer server = this.level().getServer();
+        MinecraftServer server = ((ServerPlayerAccessor) this).getServer();
 
-        executor.schedule(() -> server.execute(() -> {
-            ServerPlayer newPlayer = server.getPlayerList().respawn(
-                    this,
-                    false,
-                    Entity.RemovalReason.KILLED
+        server.execute(() -> {
+            this.connection.handleClientCommand(
+                    new ServerboundClientCommandPacket(
+                            ServerboundClientCommandPacket.Action.PERFORM_RESPAWN
+                    )
             );
 
-            if (newPlayer instanceof EntityPlayerMPFake fake) {
+            ServerPlayer p = this.connection.player;
+            if (p instanceof EntityPlayerMPFake fake) {
                 fake.setHealth(20.0F);
                 fake.foodData = new FoodData();
-                fake.giveExperienceLevels(-(fake.experienceLevel + 1));
-
-                fake.teleportTo(fake.spawnPos.x, fake.spawnPos.y, fake.spawnPos.z);
-                fake.setYRot((float) fake.spawnYaw);
-                fake.setYHeadRot((float) fake.spawnYaw);
-                fake.setDeltaMovement(0.0D, 0.0D, 0.0D);
+                fake.setExperienceLevels(0);
+                fake.setExperiencePoints(0);
             }
-        }), 1L, TimeUnit.MILLISECONDS);
+        });
     }
+
 
     @Override
     public String getIpAddress() {
@@ -308,8 +325,6 @@ public class EntityPlayerMPFake extends ServerPlayer {
             connection.handleClientCommand(p);
         }
 
-        // If above branch was taken, *this* has been removed and replaced, the new instance has been set
-        // on 'our' connection (which is now theirs, but we still have a ref).
         if (connection.player.isChangingDimension()) {
             connection.player.hasChangedDimension();
         }
@@ -319,7 +334,7 @@ public class EntityPlayerMPFake extends ServerPlayer {
     @Override
     protected void blockUsingItem(ServerLevel serverLevel, LivingEntity livingEntity) {
         ItemStack itemStack = this.getItemBlockingWith();
-        BlocksAttacks blocksAttacks = itemStack != null ? (BlocksAttacks) itemStack.get(DataComponents.BLOCKS_ATTACKS) : null;
+        BlocksAttacks blocksAttacks = itemStack != null ? itemStack.get(DataComponents.BLOCKS_ATTACKS) : null;
         float f = livingEntity.getSecondsToDisableBlocking();
         if (f > 0.0F && blocksAttacks != null) {
             blocksAttacks.disable(serverLevel, this, f, itemStack);
