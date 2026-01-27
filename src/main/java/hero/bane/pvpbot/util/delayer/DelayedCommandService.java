@@ -45,10 +45,7 @@ public final class DelayedCommandService {
         List<DelayedCommandData.Entry> entries =
                 filter == null ? DelayedCommandData.snapshot() : DelayedCommandData.snapshot(filter);
 
-        source.sendSuccess(() -> Component.literal("/delayed queue:\n"), false);
-        if(entries.isEmpty()) {
-            source.sendSuccess(() -> Component.literal(" (Empty)"), false);
-        }
+        source.sendSuccess(() -> Component.literal("/delayed queue:\n" + (entries.isEmpty() ? " (Empty)" : "")), false);
 
         for (int i = 0; i < entries.size(); i++) {
             DelayedCommandData.Entry e = entries.get(i);
@@ -77,9 +74,9 @@ public final class DelayedCommandService {
                             );
 
             Component delay =
-                    Component.literal("\nDelay Remaining: " + ticks + " ticks [" + seconds + "s]");
+                    Component.literal("\nDelay Remaining: " + ticks + " ticks [" + seconds + "s]").withColor(0xFFE0CC);
 
-            Component delayHint =
+            Component remover =
                     Component.literal("\nClick to copy remove command")
                             .withStyle(style ->
                                     style.withClickEvent(new ClickEvent.SuggestCommand(delete))
@@ -96,8 +93,8 @@ public final class DelayedCommandService {
                                     .append(uuid)
                                     .append(payload)
                                     .append(delay)
-                                    .append(delayHint)
-                                    .append("\n---"),
+                                    .append(remover)
+                                    .append("\n↳"),
                     false
             );
         }
