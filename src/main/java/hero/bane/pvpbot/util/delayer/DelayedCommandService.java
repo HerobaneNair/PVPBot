@@ -19,7 +19,7 @@ public final class DelayedCommandService {
         return schedule(source, ticks, functionId, true);
     }
 
-    private static int schedule(CommandSourceStack source, int ticks, String payload, boolean isFunction) {
+    private static int schedule(CommandSourceStack source, int ticks, String runnables, boolean isFunction) {
         String id = UUID.randomUUID().toString();
         long executeAt = source.getLevel().getGameTime() + ticks;
 
@@ -28,14 +28,14 @@ public final class DelayedCommandService {
                 : new UUID(0L, 0L);
 
         DelayedCommandData.add(
-                new DelayedCommandData.Entry(id, executor, payload, isFunction, executeAt)
+                new DelayedCommandData.Entry(id, executor, runnables, isFunction, executeAt)
         );
 
         source.getServer()
                 .getWorldData()
                 .overworldData()
                 .getScheduledEvents()
-                .schedule(id, executeAt, new DelayedCommandData.Callback(id, source, payload, isFunction));
+                .schedule(id, executeAt, new DelayedCommandData.Callback(id, source, runnables, isFunction));
 
         return 1;
     }
@@ -45,7 +45,10 @@ public final class DelayedCommandService {
         List<DelayedCommandData.Entry> entries =
                 filter == null ? DelayedCommandData.snapshot() : DelayedCommandData.snapshot(filter);
 
-        source.sendSuccess(() -> Component.literal("Queue:\n"), false);
+        source.sendSuccess(() -> Component.literal("/delayed queue:\n"), false);
+        if(entries.isEmpty()) {
+            source.sendSuccess(() -> Component.literal(" (Empty)"), false);
+        }
 
         for (int i = 0; i < entries.size(); i++) {
             DelayedCommandData.Entry e = entries.get(i);
@@ -59,15 +62,15 @@ public final class DelayedCommandService {
                     Component.literal("UUID: " + e.executor.toString())
                             .withColor(0xCCFFCC);
 
-            Component payload =
+            Component runnables =
                     Component.literal(e.isFunction ? "\nFunction: " : "\nCommand: ")
                             .withColor(0xFFFFCC)
                             .append(
-                                    Component.literal(e.payload)
+                                    Component.literal(e.runnables)
                                             .withStyle(style ->
                                                     style.withHoverEvent(
                                                             new HoverEvent.ShowText(
-                                                                    Component.literal(e.payload)
+                                                                    Component.literal(e.runnables)
                                                             )
                                                     ).withColor(0xFFFFCC)
                                             )
@@ -91,7 +94,7 @@ public final class DelayedCommandService {
             source.sendSuccess(() ->
                             Component.literal("")
                                     .append(uuid)
-                                    .append(payload)
+                                    .append(runnables)
                                     .append(delay)
                                     .append(delayHint)
                                     .append("\n---"),
@@ -120,7 +123,7 @@ public final class DelayedCommandService {
                 .remove(removed.id);
 
         source.sendSuccess(
-                () -> Component.literal((removed.isFunction ? ("Removed Func: ") : ("Removed Cmd: ")) + removed.payload),
+                () -> Component.literal((removed.isFunction ? ("Removed Func: ") : ("Removed Cmd: ")) + removed.runnables),
                 false
         );
 
@@ -129,6 +132,7 @@ public final class DelayedCommandService {
 
     public static int clear(CommandSourceStack source) {
         List<DelayedCommandData.Entry> entries = DelayedCommandData.snapshot();
+        source.sendSuccess(() -> Component.literal(entries.size() + " delayed runnables removed"), false);
         for (DelayedCommandData.Entry e : entries) {
             source.getServer()
                     .getWorldData()

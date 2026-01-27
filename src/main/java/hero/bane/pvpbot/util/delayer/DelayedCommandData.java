@@ -18,14 +18,14 @@ public final class DelayedCommandData {
     public static final class Entry {
         public final String id;
         public final UUID executor;
-        public final String payload;
+        public final String runnables;
         public final boolean isFunction;
         public final long executeAt;
 
-        public Entry(String id, UUID executor, String payload, boolean isFunction, long executeAt) {
+        public Entry(String id, UUID executor, String runnables, boolean isFunction, long executeAt) {
             this.id = id;
             this.executor = executor;
-            this.payload = payload;
+            this.runnables = runnables;
             this.isFunction = isFunction;
             this.executeAt = executeAt;
         }
