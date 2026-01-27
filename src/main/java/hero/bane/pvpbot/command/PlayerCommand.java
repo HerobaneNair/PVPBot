@@ -21,11 +21,8 @@ import net.minecraft.commands.arguments.coordinates.RotationArgument;
 import net.minecraft.commands.arguments.coordinates.Vec3Argument;
 import net.minecraft.commands.arguments.item.ItemArgument;
 import net.minecraft.core.Direction;
-import net.minecraft.network.DisconnectionDetails;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.permissions.PermissionSet;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
@@ -154,6 +151,16 @@ public class PlayerCommand {
                                                                 RotationArgument.getRotation(c, "direction")
                                                                         .getRotation(c.getSource())
                                                         )))))
+                                .then(literal("copycat")
+                                        .then(argument("source", EntityArgument.player())
+                                                .executes(context -> {
+                                                    ServerPlayer source = EntityArgument.getPlayer(context, "source");
+                                                    for (EntityPlayerMPFake fake : requireFakeTargets(context))
+                                                    {
+                                                        fake.copycat(source);
+                                                    }
+                                                    return 1;
+                                                })))
                         )
         );
     }

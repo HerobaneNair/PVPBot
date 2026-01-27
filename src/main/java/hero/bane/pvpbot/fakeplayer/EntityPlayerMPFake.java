@@ -110,7 +110,7 @@ public class EntityPlayerMPFake extends ServerPlayer {
             server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), instance, new CommonListenerCookie(current, 0, instance.clientInformation(), false));
             loadPlayerData(instance);
             instance.stopRiding(); // otherwise the created fake player will be on the vehicle
-            instance.teleportTo(worldIn, pos.x, pos.y, pos.z, Set.of(), (float) yaw, (float) pitch, true);
+//            instance.teleportTo(worldIn, pos.x, pos.y, pos.z, Set.of(), (float) yaw, (float) pitch, true);
             instance.setHealth(20.0F);
             instance.unsetRemoved();
             instance.getAttribute(Attributes.STEP_HEIGHT).setBaseValue(0.6F);
@@ -181,6 +181,25 @@ public class EntityPlayerMPFake extends ServerPlayer {
         //player.world.getChunkManager().updatePosition(playerShadow);
         playerShadow.getAbilities().flying = player.getAbilities().flying;
         return playerShadow;
+    }
+
+    public void copycat(ServerPlayer otherPlayer) {
+        if (!(otherPlayer instanceof ServerPlayerInterface src)) {
+            return;
+        }
+
+        if (!(this instanceof ServerPlayerInterface dst)) {
+            return;
+        }
+
+        dst.getActionPack().copyFrom(src.getActionPack());
+
+        this.getInventory().clearContent();
+        for (int i = 0; i < otherPlayer.getInventory().getContainerSize(); i++) {
+            this.getInventory().setItem(i, otherPlayer.getInventory().getItem(i).copy());
+        }
+
+        this.inventoryMenu.sendAllDataToRemote();
     }
 
     public static EntityPlayerMPFake respawnFake(MinecraftServer server, ServerLevel level, GameProfile profile, ClientInformation cli) {

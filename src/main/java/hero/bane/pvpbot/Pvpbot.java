@@ -1,9 +1,6 @@
 package hero.bane.pvpbot;
 
-import hero.bane.pvpbot.command.DistanceCommand;
-import hero.bane.pvpbot.command.PVPBotCommand;
-import hero.bane.pvpbot.command.PlayerCommand;
-import hero.bane.pvpbot.command.PlayerSpawnCommand;
+import hero.bane.pvpbot.command.*;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import org.slf4j.Logger;
@@ -22,6 +19,7 @@ public class PVPBot implements ModInitializer {
             PlayerSpawnCommand.register(dispatcher, registryAccess);
             DistanceCommand.register(dispatcher, registryAccess);
             PVPBotCommand.register(dispatcher, registryAccess);
+            DelayedCommand.register(dispatcher, registryAccess);
         });
     }
 }

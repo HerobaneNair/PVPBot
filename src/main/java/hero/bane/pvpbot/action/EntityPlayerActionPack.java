@@ -16,12 +16,14 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.vehicle.boat.Boat;
 import net.minecraft.world.entity.vehicle.minecart.Minecart;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.KineticWeapon;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
 
@@ -284,8 +286,8 @@ public class EntityPlayerActionPack {
     }
 
     static HitResult getTarget(ServerPlayer player) {
-        double blockReach = player.gameMode.isCreative() ? 5 : 4.5f;
-        double entityReach = player.gameMode.isCreative() ? 5 : 3f;
+        double blockReach = player.gameMode.isCreative() ? 5 : 4.5;
+        double entityReach = player.gameMode.isCreative() ? 5 : 3;
 
         HitResult hit = Tracer.rayTrace(player, 1, blockReach, false);
 
@@ -294,7 +296,7 @@ public class EntityPlayerActionPack {
     }
 
     static HitResult getSpearTarget(ServerPlayer player) {
-        double blockReach = player.gameMode.isCreative() ? 5.0 : 4.5;
+        double blockReach = player.gameMode.isCreative() ? 5 : 4.5;
         double minEntityReach = 2.0;
         double maxEntityReach = player.gameMode.isCreative() ? 6.5 : 4.5;
 
@@ -304,7 +306,7 @@ public class EntityPlayerActionPack {
         }
 
         Vec3 eye = player.getEyePosition();
-        Vec3 look = player.getViewVector(1.0F);
+        Vec3 look = player.getViewVector(1);
 
         Vec3 start = eye.add(look.scale(minEntityReach));
         Vec3 end   = eye.add(look.scale(maxEntityReach));
@@ -315,7 +317,7 @@ public class EntityPlayerActionPack {
                 end,
                 player.getBoundingBox()
                         .expandTowards(look.scale(maxEntityReach))
-                        .inflate(1.0),
+                        .inflate(1),
                 e -> !e.isSpectator() && e.isPickable(),
                 maxEntityReach * maxEntityReach
         );
@@ -425,8 +427,30 @@ public class EntityPlayerActionPack {
             @Override
             void inactiveTick(ServerPlayer player, Action action) {
                 EntityPlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
-                ap.itemUseCooldown = 0;
-                player.releaseUsingItem();
+
+                if (!player.isUsingItem()) {
+                    ap.itemUseCooldown = 0;
+                    return;
+                }
+
+                ItemStack stack = player.getUseItem();
+                if (!stack.has(DataComponents.KINETIC_WEAPON)) {
+                    return;
+                }
+
+                KineticWeapon kinetic = stack.get(DataComponents.KINETIC_WEAPON);
+                if (kinetic == null) {
+                    return;
+                }
+
+                int remaining = player.getUseItemRemainingTicks();
+
+                EquipmentSlot slot =
+                        player.getUsedItemHand() == InteractionHand.OFF_HAND
+                                ? EquipmentSlot.OFFHAND
+                                : EquipmentSlot.MAINHAND;
+
+                kinetic.damageEntities(stack, remaining, player, slot);
             }
         },
         ATTACK(true) {
@@ -434,7 +458,7 @@ public class EntityPlayerActionPack {
             boolean execute(ServerPlayer player, Action action) {
                 ItemStack stack = player.getMainHandItem();
                 boolean isSpear = stack.has(DataComponents.KINETIC_WEAPON);
-                HitResult hit = isSpear ? getSpearTarget(player) : getTarget(player);
+                    HitResult hit = isSpear ? getSpearTarget(player) : getTarget(player);
                 switch (hit.getType()) {
                     case ENTITY: {
                         if (isSpear) {
