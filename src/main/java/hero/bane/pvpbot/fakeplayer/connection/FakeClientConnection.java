@@ -1,6 +1,5 @@
-package hero.bane.pvpbot.fakeplayer;
+package hero.bane.pvpbot.fakeplayer.connection;
 
-import hero.bane.pvpbot.fakes.ClientConnectionInterface;
 import io.netty.channel.embedded.EmbeddedChannel;
 import net.minecraft.network.Connection;
 import net.minecraft.network.PacketListener;

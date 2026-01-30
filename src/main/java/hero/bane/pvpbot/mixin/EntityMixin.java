@@ -3,7 +3,7 @@ package hero.bane.pvpbot.mixin;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import hero.bane.pvpbot.PVPBotSettings;
-import hero.bane.pvpbot.fakeplayer.EntityPlayerMPFake;
+import hero.bane.pvpbot.fakeplayer.FakePlayer;
 import net.minecraft.network.protocol.game.ClientboundSetPassengersPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -35,7 +35,7 @@ public abstract class EntityMixin {
 
     @Inject(method = "isLocalInstanceAuthoritative", at = @At("HEAD"), cancellable = true)
     private void isFakePlayer(CallbackInfoReturnable<Boolean> cir) {
-        if (getControllingPassenger() instanceof EntityPlayerMPFake)
+        if (getControllingPassenger() instanceof FakePlayer)
             cir.setReturnValue(!level.isClientSide());
     }
 

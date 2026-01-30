@@ -2,7 +2,8 @@ package hero.bane.pvpbot.fakeplayer;
 
 import com.mojang.authlib.GameProfile;
 import hero.bane.pvpbot.PVPBotSettings;
-import hero.bane.pvpbot.fakes.ServerPlayerInterface;
+import hero.bane.pvpbot.fakeplayer.connection.FakeClientConnection;
+import hero.bane.pvpbot.fakeplayer.connection.ServerPlayerInterface;
 import hero.bane.pvpbot.mixin.ServerPlayerAccessor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
@@ -53,7 +54,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("EntityConstructor")
-public class EntityPlayerMPFake extends ServerPlayer {
+public class FakePlayer extends ServerPlayer {
     private static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private static final Set<String> spawning = new HashSet<>();
 
@@ -105,12 +106,12 @@ public class EntityPlayerMPFake extends ServerPlayer {
                 current = p;
             }
 
-            EntityPlayerMPFake instance = new EntityPlayerMPFake(server, worldIn, current, ClientInformation.createDefault(), false);
+            FakePlayer instance = new FakePlayer(server, worldIn, current, ClientInformation.createDefault(), false);
             instance.fixStartingPosition = () -> instance.snapTo(pos.x, pos.y, pos.z, (float) yaw, (float) pitch);
             server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), instance, new CommonListenerCookie(current, 0, instance.clientInformation(), false));
             loadPlayerData(instance);
             instance.stopRiding(); // otherwise the created fake player will be on the vehicle
-//            instance.teleportTo(worldIn, pos.x, pos.y, pos.z, Set.of(), (float) yaw, (float) pitch, true);
+            instance.teleportTo(worldIn, pos.x, pos.y, pos.z, Set.of(), (float) yaw, (float) pitch, true);
             instance.setHealth(20.0F);
             instance.unsetRemoved();
             instance.getAttribute(Attributes.STEP_HEIGHT).setBaseValue(0.6F);
@@ -143,7 +144,7 @@ public class EntityPlayerMPFake extends ServerPlayer {
         return resolvableProfile.resolveProfile(server.services().profileResolver());
     }
 
-    private static void loadPlayerData(EntityPlayerMPFake player) {
+    private static void loadPlayerData(FakePlayer player) {
         player.level().getServer().getPlayerList()
                 .loadPlayerData(player.nameAndId())
                 .map(tag -> TagValueInput.create(
@@ -158,11 +159,11 @@ public class EntityPlayerMPFake extends ServerPlayer {
                 });
     }
 
-    public static EntityPlayerMPFake createShadow(MinecraftServer server, ServerPlayer player) {
+    public static FakePlayer createShadow(MinecraftServer server, ServerPlayer player) {
         player.connection.disconnect(Component.translatable("multiplayer.disconnect.duplicate_login"));
         ServerLevel worldIn = player.level();//.getWorld(player.dimension);
         GameProfile gameprofile = player.getGameProfile();
-        EntityPlayerMPFake playerShadow = new EntityPlayerMPFake(server, worldIn, gameprofile, player.clientInformation(), true);
+        FakePlayer playerShadow = new FakePlayer(server, worldIn, gameprofile, player.clientInformation(), true);
         playerShadow.setChatSession(player.getChatSession());
         server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), playerShadow, new CommonListenerCookie(gameprofile, 0, player.clientInformation(), true));
         loadPlayerData(playerShadow);
@@ -202,15 +203,15 @@ public class EntityPlayerMPFake extends ServerPlayer {
         this.inventoryMenu.sendAllDataToRemote();
     }
 
-    public static EntityPlayerMPFake respawnFake(MinecraftServer server, ServerLevel level, GameProfile profile, ClientInformation cli) {
-        return new EntityPlayerMPFake(server, level, profile, cli, false);
+    public static FakePlayer respawnFake(MinecraftServer server, ServerLevel level, GameProfile profile, ClientInformation cli) {
+        return new FakePlayer(server, level, profile, cli, false);
     }
 
     public static boolean isSpawningPlayer(String username) {
         return spawning.contains(username);
     }
 
-    private EntityPlayerMPFake(MinecraftServer server, ServerLevel worldIn, GameProfile profile, ClientInformation cli, boolean shadow) {
+    private FakePlayer(MinecraftServer server, ServerLevel worldIn, GameProfile profile, ClientInformation cli, boolean shadow) {
         super(server, worldIn, profile, cli);
         this.isAShadow = shadow;
     }
@@ -295,7 +296,7 @@ public class EntityPlayerMPFake extends ServerPlayer {
             );
 
             ServerPlayer p = this.connection.player;
-            if (p instanceof EntityPlayerMPFake fake) {
+            if (p instanceof FakePlayer fake) {
                 fake.setHealth(20.0F);
                 fake.foodData = new FoodData();
                 fake.setExperienceLevels(0);

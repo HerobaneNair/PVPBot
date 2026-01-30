@@ -4,7 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import hero.bane.pvpbot.fakeplayer.EntityPlayerMPFake;
+import hero.bane.pvpbot.fakeplayer.FakePlayer;
 import net.minecraft.SharedConstants;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
@@ -23,7 +23,6 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.item.*;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -90,7 +89,7 @@ public class PlayerSpawnCommand {
         MinecraftServer server = source.getServer();
         PlayerList playerList = server.getPlayerList();
 
-        if (EntityPlayerMPFake.isSpawningPlayer(name)) return 0;
+        if (FakePlayer.isSpawningPlayer(name)) return 0;
         if (playerList.getPlayerByName(name) != null) return 0;
         if (name.length() > maxNameLength(server)) return 0;
 
@@ -142,7 +141,7 @@ public class PlayerSpawnCommand {
             flying = false;
         }
 
-        EntityPlayerMPFake.createFake(
+        FakePlayer.createFake(
                 name,
                 server,
                 pos,

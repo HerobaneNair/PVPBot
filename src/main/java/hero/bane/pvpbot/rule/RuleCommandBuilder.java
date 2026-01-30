@@ -15,8 +15,11 @@ public final class RuleCommandBuilder {
     public static ArgumentBuilder<CommandSourceStack, ?> build() {
         return argument("rule", StringArgumentType.word())
                 .suggests((c, b) -> {
+                    String remaining = b.getRemaining().toLowerCase();
                     for (String name : RuleRegistry.all().keySet()) {
-                        b.suggest(name);
+                        if (name.startsWith(remaining)) {
+                            b.suggest(name);
+                        }
                     }
                     return b.buildFuture();
                 })

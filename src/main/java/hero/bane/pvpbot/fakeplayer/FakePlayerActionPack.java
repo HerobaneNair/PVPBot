@@ -1,7 +1,6 @@
-package hero.bane.pvpbot.action;
+package hero.bane.pvpbot.fakeplayer;
 
-import hero.bane.pvpbot.fakeplayer.EntityPlayerMPFake;
-import hero.bane.pvpbot.fakes.ServerPlayerInterface;
+import hero.bane.pvpbot.fakeplayer.connection.ServerPlayerInterface;
 import hero.bane.pvpbot.mixin.LivingEntityAccessor;
 import hero.bane.pvpbot.util.Tracer;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
@@ -32,7 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class EntityPlayerActionPack {
+public class FakePlayerActionPack {
     public final ServerPlayer player;
 
     private final Map<ActionType, Action> actions = new EnumMap<>(ActionType.class);
@@ -52,13 +51,13 @@ public class EntityPlayerActionPack {
     private double fakeFallDistance;
     private double lastY;
 
-    public EntityPlayerActionPack(ServerPlayer playerIn) {
+    public FakePlayerActionPack(ServerPlayer playerIn) {
         player = playerIn;
         lastY = player.getY();
         stopAll();
     }
 
-    public void copyFrom(EntityPlayerActionPack other) {
+    public void copyFrom(FakePlayerActionPack other) {
         actions.putAll(other.actions);
         currentBlock = other.currentBlock;
         blockHitDelay = other.blockHitDelay;
@@ -73,7 +72,7 @@ public class EntityPlayerActionPack {
         itemUseCooldown = other.itemUseCooldown;
     }
 
-    public EntityPlayerActionPack start(ActionType type, Action action) {
+    public FakePlayerActionPack start(ActionType type, Action action) {
         if (action.isContinuous) {
             Action curent = actions.get(type);
             if (curent != null) return this;
@@ -88,7 +87,7 @@ public class EntityPlayerActionPack {
         return this;
     }
 
-    public EntityPlayerActionPack stop(ActionType type) {
+    public FakePlayerActionPack stop(ActionType type) {
         Action action = actions.remove(type);
         if (action != null) {
             type.stop(player, action);
@@ -100,29 +99,29 @@ public class EntityPlayerActionPack {
         return this;
     }
 
-    public EntityPlayerActionPack setSneaking(boolean doSneak) {
+    public FakePlayerActionPack setSneaking(boolean doSneak) {
         sneaking = doSneak;
         player.setShiftKeyDown(doSneak);
         return this;
     }
 
-    public EntityPlayerActionPack setSprinting(boolean doSprint) {
+    public FakePlayerActionPack setSprinting(boolean doSprint) {
         sprinting = doSprint;
         player.setSprinting(doSprint);
         return this;
     }
 
-    public EntityPlayerActionPack setForward(float value) {
+    public FakePlayerActionPack setForward(float value) {
         forward = value;
         return this;
     }
 
-    public EntityPlayerActionPack setStrafing(float value) {
+    public FakePlayerActionPack setStrafing(float value) {
         strafing = value;
         return this;
     }
 
-    public EntityPlayerActionPack look(Direction direction) {
+    public FakePlayerActionPack look(Direction direction) {
         return switch (direction) {
             case NORTH -> look(180, 0);
             case SOUTH -> look(0, 0);
@@ -133,30 +132,30 @@ public class EntityPlayerActionPack {
         };
     }
 
-    public EntityPlayerActionPack look(Vec2 rotation) {
+    public FakePlayerActionPack look(Vec2 rotation) {
         return look(rotation.y, rotation.x);
     }
 
-    public EntityPlayerActionPack look(float yaw, float pitch) {
+    public FakePlayerActionPack look(float yaw, float pitch) {
         player.setYRot(yaw % 360);
         player.setXRot(Mth.clamp(pitch, -90, 90));
         return this;
     }
 
-    public EntityPlayerActionPack lookAt(Vec3 position) {
+    public FakePlayerActionPack lookAt(Vec3 position) {
         player.lookAt(EntityAnchorArgument.Anchor.EYES, position);
         return this;
     }
 
-    public EntityPlayerActionPack turn(float yaw, float pitch) {
+    public FakePlayerActionPack turn(float yaw, float pitch) {
         return look(player.getYRot() + yaw, player.getXRot() + pitch);
     }
 
-    public EntityPlayerActionPack turn(Vec2 rotation) {
+    public FakePlayerActionPack turn(Vec2 rotation) {
         return turn(rotation.x, rotation.y);
     }
 
-    public EntityPlayerActionPack stopMovement() {
+    public FakePlayerActionPack stopMovement() {
         setSneaking(false);
         setSprinting(false);
         forward = 0.0F;
@@ -164,13 +163,13 @@ public class EntityPlayerActionPack {
         return this;
     }
 
-    public EntityPlayerActionPack stopAll() {
+    public FakePlayerActionPack stopAll() {
         for (ActionType type : actions.keySet()) type.stop(player, actions.get(type));
         actions.clear();
         return stopMovement();
     }
 
-    public EntityPlayerActionPack mount(boolean onlyRideables) {
+    public FakePlayerActionPack mount(boolean onlyRideables) {
 
         List<Entity> entities;
         if (onlyRideables) {
@@ -201,7 +200,7 @@ public class EntityPlayerActionPack {
         return this;
     }
 
-    public EntityPlayerActionPack dismount() {
+    public FakePlayerActionPack dismount() {
         player.stopRiding();
         return this;
     }
@@ -277,10 +276,10 @@ public class EntityPlayerActionPack {
                 !player.getMainHandItem().has(DataComponents.KINETIC_WEAPON))
                 ? 0.20F : 1.0F;
 
-        if (forward != 0.0F || player instanceof EntityPlayerMPFake) {
+        if (forward != 0.0F || player instanceof FakePlayer) {
             player.zza = forward * vel;
         }
-        if (strafing != 0.0F || player instanceof EntityPlayerMPFake) {
+        if (strafing != 0.0F || player instanceof FakePlayer) {
             player.xxa = strafing * vel;
         }
     }
@@ -309,7 +308,7 @@ public class EntityPlayerActionPack {
         Vec3 look = player.getViewVector(1);
 
         Vec3 start = eye.add(look.scale(minEntityReach));
-        Vec3 end   = eye.add(look.scale(maxEntityReach));
+        Vec3 end = eye.add(look.scale(maxEntityReach));
 
         EntityHitResult entityHit = Tracer.rayTraceEntities(
                 player,
@@ -344,7 +343,7 @@ public class EntityPlayerActionPack {
         USE(true) {
             @Override
             boolean execute(ServerPlayer player, Action action) {
-                EntityPlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
+                FakePlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
 
                 if (ap.itemUseCooldown > 0) {
                     ap.itemUseCooldown--;
@@ -426,7 +425,7 @@ public class EntityPlayerActionPack {
 
             @Override
             void inactiveTick(ServerPlayer player, Action action) {
-                EntityPlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
+                FakePlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
 
                 if (!player.isUsingItem()) {
                     ap.itemUseCooldown = 0;
@@ -458,7 +457,7 @@ public class EntityPlayerActionPack {
             boolean execute(ServerPlayer player, Action action) {
                 ItemStack stack = player.getMainHandItem();
                 boolean isSpear = stack.has(DataComponents.KINETIC_WEAPON);
-                    HitResult hit = isSpear ? getSpearTarget(player) : getTarget(player);
+                HitResult hit = isSpear ? getSpearTarget(player) : getTarget(player);
                 switch (hit.getType()) {
                     case ENTITY: {
                         if (isSpear) {
@@ -489,7 +488,7 @@ public class EntityPlayerActionPack {
                         return true;
                     }
                     case BLOCK: {
-                        EntityPlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
+                        FakePlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
                         if (ap.blockHitDelay > 0) {
                             ap.blockHitDelay--;
                             return false;
@@ -657,7 +656,7 @@ public class EntityPlayerActionPack {
             return new Action(-1, interval, 0, false, null);
         }
 
-        Boolean tick(EntityPlayerActionPack actionPack, ActionType type) {
+        Boolean tick(FakePlayerActionPack actionPack, ActionType type) {
             next--;
             Boolean cancel = null;
             if (next <= 0) {
@@ -685,7 +684,7 @@ public class EntityPlayerActionPack {
             return cancel;
         }
 
-        void retry(EntityPlayerActionPack actionPack, ActionType type) {
+        void retry(FakePlayerActionPack actionPack, ActionType type) {
             if (!type.preventSpectator || !actionPack.player.isSpectator()) {
                 type.execute(actionPack.player, this);
             }

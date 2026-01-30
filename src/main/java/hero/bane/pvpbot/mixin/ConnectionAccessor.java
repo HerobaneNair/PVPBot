@@ -1,6 +1,6 @@
 package hero.bane.pvpbot.mixin;
 
-import hero.bane.pvpbot.fakes.ClientConnectionInterface;
+import hero.bane.pvpbot.fakeplayer.connection.ClientConnectionInterface;
 import io.netty.channel.Channel;
 import net.minecraft.network.Connection;
 import org.spongepowered.asm.mixin.Mixin;

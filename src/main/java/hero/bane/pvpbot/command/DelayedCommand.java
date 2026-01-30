@@ -21,7 +21,7 @@ public class DelayedCommand {
                                 .then(Commands.argument("ticks", IntegerArgumentType.integer(1))
 
                                         .then(Commands.literal("command")
-                                                .then(Commands.argument("command", StringArgumentType.greedyString())
+                                                .then(Commands.argument("command (don't add slash)", StringArgumentType.greedyString())
                                                         .executes(ctx ->
                                                                 DelayedCommandService.scheduleCommand(
                                                                         ctx.getSource(),
