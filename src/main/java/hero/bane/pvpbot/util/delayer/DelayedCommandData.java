@@ -89,7 +89,7 @@ public final class DelayedCommandData {
                 if (isFunction) {
                     server.getCommands().performPrefixedCommand(
                             source,
-                            "function " + payload
+                            "function " + runnableThing
                     );
                 } else {
                     server.getCommands().performPrefixedCommand(
