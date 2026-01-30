@@ -2,7 +2,7 @@ package hero.bane.pvpbot.fakeplayer;
 
 import hero.bane.pvpbot.fakeplayer.connection.ServerPlayerInterface;
 import hero.bane.pvpbot.mixin.LivingEntityAccessor;
-import hero.bane.pvpbot.util.Tracer;
+import hero.bane.pvpbot.util.RayTrace;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -288,10 +288,10 @@ public class FakePlayerActionPack {
         double blockReach = player.gameMode.isCreative() ? 5 : 4.5;
         double entityReach = player.gameMode.isCreative() ? 5 : 3;
 
-        HitResult hit = Tracer.rayTrace(player, 1, blockReach, false);
+        HitResult hit = RayTrace.rayTrace(player, 1, blockReach, false);
 
         if (hit.getType() == HitResult.Type.BLOCK) return hit;
-        return Tracer.rayTrace(player, 1, entityReach, false);
+        return RayTrace.rayTrace(player, 1, entityReach, false);
     }
 
     static HitResult getSpearTarget(ServerPlayer player) {
@@ -299,7 +299,7 @@ public class FakePlayerActionPack {
         double minEntityReach = 2.0;
         double maxEntityReach = player.gameMode.isCreative() ? 6.5 : 4.5;
 
-        HitResult blockHit = Tracer.rayTrace(player, 1, blockReach, false);
+        HitResult blockHit = RayTrace.rayTrace(player, 1, blockReach, false);
         if (blockHit.getType() == HitResult.Type.BLOCK) {
             return blockHit;
         }
@@ -310,7 +310,7 @@ public class FakePlayerActionPack {
         Vec3 start = eye.add(look.scale(minEntityReach));
         Vec3 end = eye.add(look.scale(maxEntityReach));
 
-        EntityHitResult entityHit = Tracer.rayTraceEntities(
+        EntityHitResult entityHit = RayTrace.rayTraceEntities(
                 player,
                 start,
                 end,

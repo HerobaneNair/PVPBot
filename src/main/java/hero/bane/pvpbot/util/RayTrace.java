@@ -8,7 +8,7 @@ import net.minecraft.world.phys.*;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-public class Tracer
+public class RayTrace
 {
     public static HitResult rayTrace(Entity source, float partialTicks, double reach, boolean fluids)
     {
