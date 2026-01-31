@@ -169,6 +169,9 @@ public class FakePlayerActionPack {
         return stopMovement();
     }
 
+    //Mounting Stuff
+    /*
+
     public FakePlayerActionPack mount(boolean onlyRideables) {
 
         List<Entity> entities;
@@ -199,11 +202,14 @@ public class FakePlayerActionPack {
             player.startRiding(closest);
         return this;
     }
-
+     */
+    /*
     public FakePlayerActionPack dismount() {
         player.stopRiding();
         return this;
     }
+
+     */
 
     public void onUpdate() {
 
@@ -354,8 +360,10 @@ public class FakePlayerActionPack {
                     return true;
                 }
 
-                HitResult hit = getTarget(player);
-
+                ItemStack stack = player.getMainHandItem();
+                boolean isSpear = stack.has(DataComponents.KINETIC_WEAPON);
+                HitResult hit = isSpear ? getSpearTarget(player) : getTarget(player);
+                
                 for (InteractionHand hand : InteractionHand.values()) {
                     switch (hit.getType()) {
                         case BLOCK: {
@@ -408,12 +416,10 @@ public class FakePlayerActionPack {
                         }
                     }
 
-                    ItemStack handItem = player.getItemInHand(hand);
-
-                    if (player.gameMode.useItem(player, player.level(), handItem, hand).consumesAction()) {
-                        if (handItem.has(DataComponents.KINETIC_WEAPON) && !player.isUsingItem()) {
-                            player.startUsingItem(hand);
-                        }
+                    if (player.gameMode.useItem(player, player.level(), stack, hand).consumesAction()) {
+//                        if (stack.has(DataComponents.KINETIC_WEAPON) && !player.isUsingItem()) {
+//                            player.startUsingItem(hand);
+//                        }
 
                         ap.itemUseCooldown = 3;
                         return true;

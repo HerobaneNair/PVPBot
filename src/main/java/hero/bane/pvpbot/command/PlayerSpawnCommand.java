@@ -151,7 +151,6 @@ public class PlayerSpawnCommand {
                 mode,
                 flying
         );
-
         return 1;
     }
 

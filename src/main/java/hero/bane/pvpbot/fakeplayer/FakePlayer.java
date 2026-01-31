@@ -259,20 +259,20 @@ public class FakePlayer extends ServerPlayer {
         }
     }
 
-    @Override
-    public boolean startRiding(Entity entityToRide, boolean force, boolean sendEventAndTriggers) {
-        if (super.startRiding(entityToRide, force, sendEventAndTriggers)) {
-            // from ClientPacketListener.handleSetEntityPassengersPacket
-            if (entityToRide instanceof AbstractBoat) {
-                this.yRotO = entityToRide.getYRot();
-                this.setYRot(entityToRide.getYRot());
-                this.setYHeadRot(entityToRide.getYRot());
-            }
-            return true;
-        } else {
-            return false;
-        }
-    }
+//    @Override
+//    public boolean startRiding(Entity entityToRide, boolean force, boolean sendEventAndTriggers) {
+//        if (super.startRiding(entityToRide, force, sendEventAndTriggers)) {
+//            // from ClientPacketListener.handleSetEntityPassengersPacket
+//            if (entityToRide instanceof AbstractBoat) {
+//                this.yRotO = entityToRide.getYRot();
+//                this.setYRot(entityToRide.getYRot());
+//                this.setYHeadRot(entityToRide.getYRot());
+//            }
+//            return true;
+//        } else {
+//            return false;
+//        }
+//    }
 
     private void shakeOff() {
         if (getVehicle() instanceof Player) stopRiding();

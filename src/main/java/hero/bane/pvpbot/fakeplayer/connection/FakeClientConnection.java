@@ -27,5 +27,4 @@ public class FakeClientConnection extends Connection {
     @Override
     public <T extends PacketListener> void setupInboundProtocol(ProtocolInfo<T> protocolInfo, T packetListener) {
     }
-
 }

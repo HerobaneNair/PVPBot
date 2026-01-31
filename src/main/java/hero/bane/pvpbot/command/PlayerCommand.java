@@ -78,12 +78,12 @@ public class PlayerCommand {
                                 .then(literal("disconnect")
                                         .executes(PlayerCommand::disconnect))
 
-                                .then(literal("mount")
-                                        .executes(manipulation(ap -> ap.mount(true)))
-                                        .then(literal("anything")
-                                                .executes(manipulation(ap -> ap.mount(false)))))
-                                .then(literal("dismount")
-                                        .executes(manipulation(FakePlayerActionPack::dismount)))
+//                                .then(literal("mount")
+//                                        .executes(manipulation(ap -> ap.mount(true)))
+//                                        .then(literal("anything")
+//                                                .executes(manipulation(ap -> ap.mount(false)))))
+//                                .then(literal("dismount")
+//                                        .executes(manipulation(FakePlayerActionPack::dismount)))
 
                                 .then(literal("sneak")
                                         .executes(manipulation(ap -> ap.setSneaking(true))))
