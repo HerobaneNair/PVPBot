@@ -17,7 +17,6 @@ import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
 
 public class DistanceCommand {
-    @FunctionalInterface
     private interface VecSupplier {
         Vec3 get(CommandContext<CommandSourceStack> c) throws CommandSyntaxException;
     }
@@ -26,7 +25,6 @@ public class DistanceCommand {
         dispatcher.register(
                 literal("distance")
                         .then(literal("from")
-
                                 .then(argument("fromPos", Vec3Argument.vec3())
                                         .then(literal("to")
                                                 .then(withDistanceExecutors(
@@ -39,7 +37,6 @@ public class DistanceCommand {
                                                         c -> Vec3Argument.getVec3(c, "fromPos"),
                                                         c -> EntityArgument.getEntity(c, "toEntity").position()
                                                 ))))
-
                                 .then(argument("fromEntity", EntityArgument.entity())
                                         .then(literal("to")
                                                 .then(withDistanceExecutors(

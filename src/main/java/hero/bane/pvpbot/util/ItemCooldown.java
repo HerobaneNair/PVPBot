@@ -11,7 +11,7 @@ import net.minecraft.commands.arguments.item.ItemArgument;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Item;
@@ -137,7 +137,7 @@ public final class ItemCooldown {
         ItemCooldowns cooldowns = player.getCooldowns();
         ItemCooldownsInterface accessor = (ItemCooldownsInterface) cooldowns;
         try {
-            for (ResourceLocation id : List.copyOf(accessor.getCooldowns().keySet())) {
+            for (Identifier id : List.copyOf(accessor.getCooldowns().keySet())) {
                 c++;
                 cooldowns.removeCooldown(id);
             }
@@ -174,7 +174,7 @@ public final class ItemCooldown {
         }
         if (cd == null) return false;
 
-        ResourceLocation group =
+        Identifier group =
                 cd.cooldownGroup().orElse(BuiltInRegistries.ITEM.getKey(item));
 
         player.getCooldowns().addCooldown(group, cd.ticks());
@@ -206,7 +206,7 @@ public final class ItemCooldown {
         }
     }
 
-    private static ResourceLocation group(Item item) {
+    private static Identifier group(Item item) {
         return BuiltInRegistries.ITEM.getKey(item);
     }
 }

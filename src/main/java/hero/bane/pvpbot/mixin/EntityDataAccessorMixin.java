@@ -1,10 +1,13 @@
 package hero.bane.pvpbot.mixin;
 
+import hero.bane.pvpbot.PVPBot;
 import hero.bane.pvpbot.PVPBotSettings;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.commands.data.EntityDataAccessor;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.storage.TagValueInput;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -22,12 +25,14 @@ public class EntityDataAccessorMixin {
     private Entity entity;
 
     @Inject(method = "setData", at = @At("HEAD"), cancellable = true)
-    void allowPlayerNbtSet(CompoundTag nbt, CallbackInfo ci) {
+    void allowPlayerNbtSet(CompoundTag compoundTag, CallbackInfo ci) {
         if (!PVPBotSettings.editablePlayerNbt) return;
         if (this.entity instanceof Player) {
             UUID UUID = this.entity.getUUID();
-            this.entity.load(nbt);
-            this.entity.setUUID(UUID);
+            try (ProblemReporter.ScopedCollector scopedCollector = new ProblemReporter.ScopedCollector(this.entity.problemPath(), PVPBot.LOGGER)) {
+                this.entity.load(TagValueInput.create(scopedCollector, this.entity.registryAccess(), compoundTag));
+                this.entity.setUUID(UUID);
+            }
             ci.cancel();
         }
     }

@@ -7,11 +7,11 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
-import hero.bane.pvpbot.action.EntityPlayerActionPack;
-import hero.bane.pvpbot.action.EntityPlayerActionPack.Action;
-import hero.bane.pvpbot.action.EntityPlayerActionPack.ActionType;
-import hero.bane.pvpbot.fakeplayer.EntityPlayerMPFake;
-import hero.bane.pvpbot.fakes.ServerPlayerInterface;
+import hero.bane.pvpbot.fakeplayer.FakePlayerActionPack;
+import hero.bane.pvpbot.fakeplayer.FakePlayerActionPack.Action;
+import hero.bane.pvpbot.fakeplayer.FakePlayerActionPack.ActionType;
+import hero.bane.pvpbot.fakeplayer.FakePlayer;
+import hero.bane.pvpbot.fakeplayer.connection.ServerPlayerInterface;
 import hero.bane.pvpbot.util.ItemCooldown;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
@@ -43,11 +43,11 @@ public class PlayerCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext ctx) {
         dispatcher.register(
                 literal("player")
-                        .requires(s -> s.hasPermission(2))
+                        .requires(s -> !s.isPlayer() || s.getServer().getPlayerList().isOp(s.getPlayer().nameAndId()))
                         .then(argument("targets", EntityArgument.players())
 
                                 .then(literal("stop")
-                                        .executes(manipulation(EntityPlayerActionPack::stopAll)))
+                                        .executes(manipulation(FakePlayerActionPack::stopAll)))
 
                                 .then(makeActionCommand("use", ActionType.USE))
                                 .then(makeActionCommand("swing", ActionType.SWING))
@@ -75,20 +75,15 @@ public class PlayerCommand {
 
                                 .then(literal("kill")
                                         .executes(PlayerCommand::kill))
-
                                 .then(literal("disconnect")
                                         .executes(PlayerCommand::disconnect))
 
-                                .then(literal("shadow")
-                                        .executes(PlayerCommand::shadow))
-
-                                .then(literal("mount")
-                                        .executes(manipulation(ap -> ap.mount(true)))
-                                        .then(literal("anything")
-                                                .executes(manipulation(ap -> ap.mount(false)))))
-
-                                .then(literal("dismount")
-                                        .executes(manipulation(EntityPlayerActionPack::dismount)))
+//                                .then(literal("mount")
+//                                        .executes(manipulation(ap -> ap.mount(true)))
+//                                        .then(literal("anything")
+//                                                .executes(manipulation(ap -> ap.mount(false)))))
+//                                .then(literal("dismount")
+//                                        .executes(manipulation(FakePlayerActionPack::dismount)))
 
                                 .then(literal("sneak")
                                         .executes(manipulation(ap -> ap.setSneaking(true))))
@@ -100,7 +95,7 @@ public class PlayerCommand {
                                         .executes(manipulation(ap -> ap.setSprinting(false))))
 
                                 .then(literal("move")
-                                        .executes(manipulation(EntityPlayerActionPack::stopMovement))
+                                        .executes(manipulation(FakePlayerActionPack::stopMovement))
                                         .then(literal("forward")
                                                 .executes(manipulation(ap -> ap.setForward(1))))
                                         .then(literal("backward")
@@ -156,6 +151,16 @@ public class PlayerCommand {
                                                                 RotationArgument.getRotation(c, "direction")
                                                                         .getRotation(c.getSource())
                                                         )))))
+                                .then(literal("copycat")
+                                        .then(argument("source", EntityArgument.player())
+                                                .executes(context -> {
+                                                    ServerPlayer source = EntityArgument.getPlayer(context, "source");
+                                                    for (FakePlayer fake : requireFakeTargets(context))
+                                                    {
+                                                        fake.copycat(source);
+                                                    }
+                                                    return 1;
+                                                })))
                         )
         );
     }
@@ -175,13 +180,13 @@ public class PlayerCommand {
     }
 
 
-    private static List<EntityPlayerMPFake> requireFakeTargets(CommandContext<CommandSourceStack> context)
+    private static List<FakePlayer> requireFakeTargets(CommandContext<CommandSourceStack> context)
             throws CommandSyntaxException {
         Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "targets");
-        List<EntityPlayerMPFake> fakes = new ArrayList<>();
+        List<FakePlayer> fakes = new ArrayList<>();
 
         for (ServerPlayer p : players) {
-            if (!(p instanceof EntityPlayerMPFake fake))
+            if (!(p instanceof FakePlayer fake))
                 throw NOT_FAKE.create();
             fakes.add(fake);
         }
@@ -193,33 +198,29 @@ public class PlayerCommand {
     }
 
     private static int manipulate(CommandContext<CommandSourceStack> context,
-                                  Consumer<EntityPlayerActionPack> action)
+                                  Consumer<FakePlayerActionPack> action)
             throws CommandSyntaxException {
-        for (EntityPlayerMPFake fake : requireFakeTargets(context))
+        for (FakePlayer fake : requireFakeTargets(context))
             action.accept(((ServerPlayerInterface) fake).getActionPack());
         return 1;
     }
 
-    private static Command<CommandSourceStack> manipulation(Consumer<EntityPlayerActionPack> action) {
+    private static Command<CommandSourceStack> manipulation(Consumer<FakePlayerActionPack> action) {
         return c -> manipulate(c, action);
     }
 
     private static int kill(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        for (EntityPlayerMPFake fake : requireFakeTargets(context))
-            fake.kill(fake.serverLevel());
+        for (FakePlayer fake : requireFakeTargets(context))
+            fake.kill(fake.level());
         return 1;
     }
 
     private static int disconnect(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        for (EntityPlayerMPFake fake : requireFakeTargets(context))
+        for (FakePlayer fake : requireFakeTargets(context))
             fake.fakePlayerDisconnect(Component.literal(""));
         return 1;
     }
 
-    private static int shadow(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        requireFakeTargets(context);
-        return 0;
-    }
 
     private enum LookMode {EYES, FEET, CLOSEST}
 

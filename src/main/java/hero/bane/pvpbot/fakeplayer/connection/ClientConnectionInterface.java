@@ -1,4 +1,4 @@
-package hero.bane.pvpbot.fakes;
+package hero.bane.pvpbot.fakeplayer.connection;
 
 import io.netty.channel.Channel;
 

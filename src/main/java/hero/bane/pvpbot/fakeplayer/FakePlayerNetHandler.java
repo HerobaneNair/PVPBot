@@ -13,9 +13,9 @@ import net.minecraft.world.entity.Relative;
 
 import java.util.Set;
 
-public class NetHandlerPlayServerFake extends ServerGamePacketListenerImpl {
+public class FakePlayerNetHandler extends ServerGamePacketListenerImpl {
 
-    public NetHandlerPlayServerFake(
+    public FakePlayerNetHandler(
             MinecraftServer server,
             Connection connection,
             ServerPlayer player,
@@ -34,7 +34,7 @@ public class NetHandlerPlayServerFake extends ServerGamePacketListenerImpl {
             String key = text.getKey();
             if (key.equals("multiplayer.disconnect.idling")
                     || key.equals("multiplayer.disconnect.duplicate_login")) {
-                ((EntityPlayerMPFake) player).kill(message);
+                ((FakePlayer) player).kill(message);
             }
         }
     }
@@ -42,9 +42,9 @@ public class NetHandlerPlayServerFake extends ServerGamePacketListenerImpl {
     @Override
     public void teleport(PositionMoveRotation pos, Set<Relative> relatives) {
         super.teleport(pos, relatives);
-        if (player.serverLevel().getPlayerByUUID(player.getUUID()) != null) {
+        if (player.level().getPlayerByUUID(player.getUUID()) != null) {
             resetPosition();
-            player.serverLevel().getChunkSource().move(player);
+            player.level().getChunkSource().move(player);
         }
     }
 }

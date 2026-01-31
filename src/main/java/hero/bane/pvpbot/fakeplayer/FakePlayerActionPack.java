@@ -1,12 +1,12 @@
-package hero.bane.pvpbot.action;
+package hero.bane.pvpbot.fakeplayer;
 
-import hero.bane.pvpbot.fakeplayer.EntityPlayerMPFake;
-import hero.bane.pvpbot.fakes.ServerPlayerInterface;
+import hero.bane.pvpbot.fakeplayer.connection.ServerPlayerInterface;
 import hero.bane.pvpbot.mixin.LivingEntityAccessor;
-import hero.bane.pvpbot.util.Tracer;
+import hero.bane.pvpbot.util.RayTrace;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.protocol.game.ClientboundSetHeldSlotPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.server.level.ServerLevel;
@@ -15,12 +15,14 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.vehicle.Boat;
-import net.minecraft.world.entity.vehicle.Minecart;
+import net.minecraft.world.entity.vehicle.boat.Boat;
+import net.minecraft.world.entity.vehicle.minecart.Minecart;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.KineticWeapon;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
 
@@ -29,7 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class EntityPlayerActionPack {
+public class FakePlayerActionPack {
     public final ServerPlayer player;
 
     private final Map<ActionType, Action> actions = new EnumMap<>(ActionType.class);
@@ -49,13 +51,13 @@ public class EntityPlayerActionPack {
     private double fakeFallDistance;
     private double lastY;
 
-    public EntityPlayerActionPack(ServerPlayer playerIn) {
+    public FakePlayerActionPack(ServerPlayer playerIn) {
         player = playerIn;
         lastY = player.getY();
         stopAll();
     }
 
-    public void copyFrom(EntityPlayerActionPack other) {
+    public void copyFrom(FakePlayerActionPack other) {
         actions.putAll(other.actions);
         currentBlock = other.currentBlock;
         blockHitDelay = other.blockHitDelay;
@@ -70,7 +72,7 @@ public class EntityPlayerActionPack {
         itemUseCooldown = other.itemUseCooldown;
     }
 
-    public EntityPlayerActionPack start(ActionType type, Action action) {
+    public FakePlayerActionPack start(ActionType type, Action action) {
         if (action.isContinuous) {
             Action curent = actions.get(type);
             if (curent != null) return this;
@@ -85,7 +87,7 @@ public class EntityPlayerActionPack {
         return this;
     }
 
-    public EntityPlayerActionPack stop(ActionType type) {
+    public FakePlayerActionPack stop(ActionType type) {
         Action action = actions.remove(type);
         if (action != null) {
             type.stop(player, action);
@@ -97,29 +99,29 @@ public class EntityPlayerActionPack {
         return this;
     }
 
-    public EntityPlayerActionPack setSneaking(boolean doSneak) {
+    public FakePlayerActionPack setSneaking(boolean doSneak) {
         sneaking = doSneak;
         player.setShiftKeyDown(doSneak);
         return this;
     }
 
-    public EntityPlayerActionPack setSprinting(boolean doSprint) {
+    public FakePlayerActionPack setSprinting(boolean doSprint) {
         sprinting = doSprint;
         player.setSprinting(doSprint);
         return this;
     }
 
-    public EntityPlayerActionPack setForward(float value) {
+    public FakePlayerActionPack setForward(float value) {
         forward = value;
         return this;
     }
 
-    public EntityPlayerActionPack setStrafing(float value) {
+    public FakePlayerActionPack setStrafing(float value) {
         strafing = value;
         return this;
     }
 
-    public EntityPlayerActionPack look(Direction direction) {
+    public FakePlayerActionPack look(Direction direction) {
         return switch (direction) {
             case NORTH -> look(180, 0);
             case SOUTH -> look(0, 0);
@@ -130,30 +132,30 @@ public class EntityPlayerActionPack {
         };
     }
 
-    public EntityPlayerActionPack look(Vec2 rotation) {
+    public FakePlayerActionPack look(Vec2 rotation) {
         return look(rotation.y, rotation.x);
     }
 
-    public EntityPlayerActionPack look(float yaw, float pitch) {
+    public FakePlayerActionPack look(float yaw, float pitch) {
         player.setYRot(yaw % 360);
         player.setXRot(Mth.clamp(pitch, -90, 90));
         return this;
     }
 
-    public EntityPlayerActionPack lookAt(Vec3 position) {
+    public FakePlayerActionPack lookAt(Vec3 position) {
         player.lookAt(EntityAnchorArgument.Anchor.EYES, position);
         return this;
     }
 
-    public EntityPlayerActionPack turn(float yaw, float pitch) {
+    public FakePlayerActionPack turn(float yaw, float pitch) {
         return look(player.getYRot() + yaw, player.getXRot() + pitch);
     }
 
-    public EntityPlayerActionPack turn(Vec2 rotation) {
+    public FakePlayerActionPack turn(Vec2 rotation) {
         return turn(rotation.x, rotation.y);
     }
 
-    public EntityPlayerActionPack stopMovement() {
+    public FakePlayerActionPack stopMovement() {
         setSneaking(false);
         setSprinting(false);
         forward = 0.0F;
@@ -161,14 +163,17 @@ public class EntityPlayerActionPack {
         return this;
     }
 
-    public EntityPlayerActionPack stopAll() {
+    public FakePlayerActionPack stopAll() {
         for (ActionType type : actions.keySet()) type.stop(player, actions.get(type));
         actions.clear();
         return stopMovement();
     }
 
-    public EntityPlayerActionPack mount(boolean onlyRideables) {
-        //test what happens
+    //Mounting Stuff
+    /*
+
+    public FakePlayerActionPack mount(boolean onlyRideables) {
+
         List<Entity> entities;
         if (onlyRideables) {
             entities = player.level().getEntities(player, player.getBoundingBox().inflate(3.0D, 1.0D, 3.0D),
@@ -194,14 +199,17 @@ public class EntityPlayerActionPack {
         if (closest instanceof AbstractHorse && onlyRideables)
             ((AbstractHorse) closest).mobInteract(player, InteractionHand.MAIN_HAND);
         else
-            player.startRiding(closest, true);
+            player.startRiding(closest);
         return this;
     }
-
-    public EntityPlayerActionPack dismount() {
+     */
+    /*
+    public FakePlayerActionPack dismount() {
         player.stopRiding();
         return this;
     }
+
+     */
 
     public void onUpdate() {
 
@@ -270,24 +278,58 @@ public class EntityPlayerActionPack {
         }
 
         float vel = sneaking ? 0.3F : 1.0F;
-        vel *= player.isUsingItem() ? 0.20F : 1.0F;
+        vel *= (player.isUsingItem() &&
+                !player.getMainHandItem().has(DataComponents.KINETIC_WEAPON))
+                ? 0.20F : 1.0F;
 
-        if (forward != 0.0F || player instanceof EntityPlayerMPFake) {
+        if (forward != 0.0F || player instanceof FakePlayer) {
             player.zza = forward * vel;
         }
-        if (strafing != 0.0F || player instanceof EntityPlayerMPFake) {
+        if (strafing != 0.0F || player instanceof FakePlayer) {
             player.xxa = strafing * vel;
         }
     }
 
     static HitResult getTarget(ServerPlayer player) {
-        double blockReach = player.gameMode.isCreative() ? 5 : 4.5f;
-        double entityReach = player.gameMode.isCreative() ? 5 : 3f;
+        double blockReach = player.gameMode.isCreative() ? 5 : 4.5;
+        double entityReach = player.gameMode.isCreative() ? 5 : 3;
 
-        HitResult hit = Tracer.rayTrace(player, 1, blockReach, false);
+        HitResult hit = RayTrace.rayTrace(player, 1, blockReach, false);
 
         if (hit.getType() == HitResult.Type.BLOCK) return hit;
-        return Tracer.rayTrace(player, 1, entityReach, false);
+        return RayTrace.rayTrace(player, 1, entityReach, false);
+    }
+
+    static HitResult getSpearTarget(ServerPlayer player) {
+        double blockReach = player.gameMode.isCreative() ? 5 : 4.5;
+        double minEntityReach = 2.0;
+        double maxEntityReach = player.gameMode.isCreative() ? 6.5 : 4.5;
+
+        HitResult blockHit = RayTrace.rayTrace(player, 1, blockReach, false);
+        if (blockHit.getType() == HitResult.Type.BLOCK) {
+            return blockHit;
+        }
+
+        Vec3 eye = player.getEyePosition();
+        Vec3 look = player.getViewVector(1);
+
+        Vec3 start = eye.add(look.scale(minEntityReach));
+        Vec3 end = eye.add(look.scale(maxEntityReach));
+
+        EntityHitResult entityHit = RayTrace.rayTraceEntities(
+                player,
+                start,
+                end,
+                player.getBoundingBox()
+                        .expandTowards(look.scale(maxEntityReach))
+                        .inflate(1),
+                e -> !e.isSpectator() && e.isPickable(),
+                maxEntityReach * maxEntityReach
+        );
+
+        return entityHit == null
+                ? BlockHitResult.miss(end, player.getDirection(), BlockPos.containing(end))
+                : entityHit;
     }
 
     private void dropItemFromSlot(int slot, boolean dropAll) {
@@ -296,18 +338,6 @@ public class EntityPlayerActionPack {
             player.drop(inv.removeItem(slot,
                     dropAll ? inv.getItem(slot).getCount() : 1
             ), false, true);
-    }
-
-    public void drop(int selectedSlot, boolean dropAll) {
-        Inventory inv = player.getInventory();
-        if (selectedSlot == -2) {
-            for (int i = inv.getContainerSize(); i >= 0; i--)
-                dropItemFromSlot(i, dropAll);
-        } else {
-            if (selectedSlot == -1)
-                selectedSlot = inv.getSelectedSlot();
-            dropItemFromSlot(selectedSlot, dropAll);
-        }
     }
 
     public void setSlot(int slot) {
@@ -319,74 +349,138 @@ public class EntityPlayerActionPack {
         USE(true) {
             @Override
             boolean execute(ServerPlayer player, Action action) {
-                EntityPlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
+                FakePlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
+
                 if (ap.itemUseCooldown > 0) {
                     ap.itemUseCooldown--;
                     return true;
                 }
+
                 if (player.isUsingItem()) {
                     return true;
                 }
-                HitResult hit = getTarget(player);
+
+                ItemStack stack = player.getMainHandItem();
+                boolean isSpear = stack.has(DataComponents.KINETIC_WEAPON);
+                HitResult hit = isSpear ? getSpearTarget(player) : getTarget(player);
+                
                 for (InteractionHand hand : InteractionHand.values()) {
                     switch (hit.getType()) {
                         case BLOCK: {
                             player.resetLastActionTime();
-                            ServerLevel world = player.serverLevel();
+                            ServerLevel world = player.level().getLevel();
                             BlockHitResult blockHit = (BlockHitResult) hit;
                             BlockPos pos = blockHit.getBlockPos();
                             Direction side = blockHit.getDirection();
-                            if (pos.getY() < player.level().getMaxY() - (side == Direction.UP ? 1 : 0) && world.mayInteract(player, pos)) {
-                                InteractionResult result = player.gameMode.useItemOn(player, world, player.getItemInHand(hand), hand, blockHit);
+
+                            if (pos.getY() < player.level().getMaxY() - (side == Direction.UP ? 1 : 0)
+                                    && world.mayInteract(player, pos)) {
+
+                                InteractionResult result =
+                                        player.gameMode.useItemOn(player, world, player.getItemInHand(hand), hand, blockHit);
+
                                 player.swing(hand);
-                                if (result instanceof InteractionResult.Success success) {
+
+                                if (result instanceof InteractionResult.Success) {
                                     ap.itemUseCooldown = 3;
                                     return true;
                                 }
                             }
                             break;
                         }
+
                         case ENTITY: {
                             player.resetLastActionTime();
                             EntityHitResult entityHit = (EntityHitResult) hit;
                             Entity entity = entityHit.getEntity();
+
                             boolean handWasEmpty = player.getItemInHand(hand).isEmpty();
-                            boolean itemFrameEmpty = (entity instanceof ItemFrame) && ((ItemFrame) entity).getItem().isEmpty();
-                            Vec3 relativeHitPos = entityHit.getLocation().subtract(entity.getX(), entity.getY(), entity.getZ());
+                            boolean itemFrameEmpty =
+                                    entity instanceof ItemFrame && ((ItemFrame) entity).getItem().isEmpty();
+
+                            Vec3 relativeHitPos =
+                                    entityHit.getLocation().subtract(entity.getX(), entity.getY(), entity.getZ());
+
                             if (entity.interactAt(player, relativeHitPos, hand).consumesAction()) {
                                 ap.itemUseCooldown = 3;
                                 return true;
                             }
-                            // fix for SS itemframe always returns CONSUME even if no action is performed
-                            if (player.interactOn(entity, hand).consumesAction() && !(handWasEmpty && itemFrameEmpty)) {
+
+                            if (player.interactOn(entity, hand).consumesAction()
+                                    && !(handWasEmpty && itemFrameEmpty)) {
+
                                 ap.itemUseCooldown = 3;
                                 return true;
                             }
                             break;
                         }
                     }
-                    ItemStack handItem = player.getItemInHand(hand);
-                    if (player.gameMode.useItem(player, player.level(), handItem, hand).consumesAction()) {
+
+                    if (player.gameMode.useItem(player, player.level(), stack, hand).consumesAction()) {
+//                        if (stack.has(DataComponents.KINETIC_WEAPON) && !player.isUsingItem()) {
+//                            player.startUsingItem(hand);
+//                        }
+
                         ap.itemUseCooldown = 3;
                         return true;
                     }
                 }
+
                 return false;
             }
 
             @Override
             void inactiveTick(ServerPlayer player, Action action) {
-                EntityPlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
-                ap.itemUseCooldown = 0;
-                player.releaseUsingItem();
+                FakePlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
+
+                if (!player.isUsingItem()) {
+                    ap.itemUseCooldown = 0;
+                    return;
+                }
+
+                ItemStack stack = player.getUseItem();
+                if (!stack.has(DataComponents.KINETIC_WEAPON)) {
+                    return;
+                }
+
+                KineticWeapon kinetic = stack.get(DataComponents.KINETIC_WEAPON);
+                if (kinetic == null) {
+                    return;
+                }
+
+                int remaining = player.getUseItemRemainingTicks();
+
+                EquipmentSlot slot =
+                        player.getUsedItemHand() == InteractionHand.OFF_HAND
+                                ? EquipmentSlot.OFFHAND
+                                : EquipmentSlot.MAINHAND;
+
+                kinetic.damageEntities(stack, remaining, player, slot);
             }
         },
         ATTACK(true) {
             @Override
             boolean execute(ServerPlayer player, Action action) {
-                HitResult hit = getTarget(player);
+                ItemStack stack = player.getMainHandItem();
+                boolean isSpear = stack.has(DataComponents.KINETIC_WEAPON);
+                HitResult hit = isSpear ? getSpearTarget(player) : getTarget(player);
                 switch (hit.getType()) {
                     case ENTITY: {
+                        if (isSpear) {
+                            if (player.connection != null && player.getAttackStrengthScale(0.5F) >= 1.0F) {
+                                player.connection.handlePlayerAction(
+                                        new ServerboundPlayerActionPacket(
+                                                ServerboundPlayerActionPacket.Action.STAB,
+                                                player.blockPosition(),
+                                                player.getDirection()
+                                        )
+                                );
+                                player.resetLastActionTime();
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        }
                         EntityHitResult entityHit = (EntityHitResult) hit;
                         if (!action.isContinuous) {
                             player.fallDistance = (float) ((ServerPlayerInterface) player)
@@ -400,7 +494,7 @@ public class EntityPlayerActionPack {
                         return true;
                     }
                     case BLOCK: {
-                        EntityPlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
+                        FakePlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
                         if (ap.blockHitDelay > 0) {
                             ap.blockHitDelay--;
                             return false;
@@ -431,7 +525,6 @@ public class EntityPlayerActionPack {
                             }
                             if (notAir && state.getDestroyProgress(player, player.level(), pos) >= 1) {
                                 ap.currentBlock = null;
-                                //instamine??
                                 blockBroken = true;
                             } else {
                                 ap.currentBlock = pos;
@@ -446,7 +539,6 @@ public class EntityPlayerActionPack {
                                 blockBroken = true;
                             }
                             player.level().destroyBlockProgress(-1, pos, (int) (ap.curBlockDamageMP * 10));
-
                         }
                         player.resetLastActionTime();
                         player.swing(InteractionHand.MAIN_HAND);
@@ -458,26 +550,20 @@ public class EntityPlayerActionPack {
                 player.resetLastActionTime();
                 return false;
             }
-
-            @Override
-            void inactiveTick(ServerPlayer player, Action action) {
-                EntityPlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
-                if (ap.currentBlock == null) return;
-                player.level().destroyBlockProgress(-1, ap.currentBlock, -1);
-                player.gameMode.handleBlockBreakAction(ap.currentBlock, ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK, Direction.DOWN, player.level().getMaxY(), -1);
-                ap.currentBlock = null;
-            }
         },
         JUMP(true) {
             @Override
             boolean execute(ServerPlayer player, Action action) {
                 if (action.limit == 1) {
-                    if (player.onGround()) player.jumpFromGround(); // onGround
+                    if (player.onGround()) player.jumpFromGround();
+
                     if (!player.onGround())
-                        player.tryToStartFallFlying(); // might not be necessary for the !onGround thing but just in case (cause I didn't see it as a part of the method)
+                        player.tryToStartFallFlying();
+
                 } else {
                     if (!player.onGround())
-                        player.tryToStartFallFlying(); // might not be necessary for the !onGround thing but just in case (cause I didn't see it as a part of the method)
+                        player.tryToStartFallFlying();
+
                     player.setJumping(true);
                 }
                 return false;
@@ -492,7 +578,8 @@ public class EntityPlayerActionPack {
             @Override
             boolean execute(ServerPlayer player, Action action) {
                 player.resetLastActionTime();
-                player.drop(false); // dropSelectedItem
+                player.drop(false);
+
                 return false;
             }
         },
@@ -500,7 +587,8 @@ public class EntityPlayerActionPack {
             @Override
             boolean execute(ServerPlayer player, Action action) {
                 player.resetLastActionTime();
-                player.drop(true); // dropSelectedItem
+                player.drop(true);
+
                 return false;
             }
         },
@@ -523,7 +611,6 @@ public class EntityPlayerActionPack {
                 return false;
             }
         };
-
 
         public final boolean preventSpectator;
 
@@ -575,7 +662,7 @@ public class EntityPlayerActionPack {
             return new Action(-1, interval, 0, false, null);
         }
 
-        Boolean tick(EntityPlayerActionPack actionPack, ActionType type) {
+        Boolean tick(FakePlayerActionPack actionPack, ActionType type) {
             next--;
             Boolean cancel = null;
             if (next <= 0) {
@@ -603,7 +690,7 @@ public class EntityPlayerActionPack {
             return cancel;
         }
 
-        void retry(EntityPlayerActionPack actionPack, ActionType type) {
+        void retry(FakePlayerActionPack actionPack, ActionType type) {
             if (!type.preventSpectator || !actionPack.player.isSpectator()) {
                 type.execute(actionPack.player, this);
             }
@@ -615,3 +702,4 @@ public class EntityPlayerActionPack {
         }
     }
 }
+

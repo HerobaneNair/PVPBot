@@ -1,9 +1,8 @@
 package hero.bane.pvpbot.mixin;
 
 import com.mojang.authlib.GameProfile;
-import hero.bane.pvpbot.fakeplayer.EntityPlayerMPFake;
-import hero.bane.pvpbot.fakeplayer.NetHandlerPlayServerFake;
-import net.minecraft.nbt.CompoundTag;
+import hero.bane.pvpbot.fakeplayer.FakePlayer;
+import hero.bane.pvpbot.fakeplayer.FakePlayerNetHandler;
 import net.minecraft.network.Connection;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ClientInformation;
@@ -18,7 +17,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(PlayerList.class)
 public abstract class PlayerListMixin {
@@ -26,13 +25,12 @@ public abstract class PlayerListMixin {
     @Shadow @Final
     private MinecraftServer server;
 
-    @Inject(
-            method = "load",
-            at = @At(value = "RETURN", shift = At.Shift.BEFORE)
-    )
-    private void fixStartingPos(ServerPlayer player, CallbackInfoReturnable<CompoundTag> cir) {
-        if (player instanceof EntityPlayerMPFake fake) {
-            fake.fixStartingPosition.run();
+    @Inject(method = "placeNewPlayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;level()Lnet/minecraft/server/level/ServerLevel;"))
+    private void fixStartingPos(Connection connection, ServerPlayer serverPlayer, CommonListenerCookie commonListenerCookie, CallbackInfo ci)
+    {
+        if (serverPlayer instanceof FakePlayer)
+        {
+            ((FakePlayer) serverPlayer).fixStartingPosition.run();
         }
     }
 
@@ -49,8 +47,8 @@ public abstract class PlayerListMixin {
             ServerPlayer player,
             CommonListenerCookie cookie
     ) {
-        if (player instanceof EntityPlayerMPFake fake) {
-            return new NetHandlerPlayServerFake(this.server, connection, fake, cookie);
+        if (player instanceof FakePlayer fake) {
+            return new FakePlayerNetHandler(this.server, connection, fake, cookie);
         }
         return new ServerGamePacketListenerImpl(this.server, connection, player, cookie);
     }
@@ -70,8 +68,8 @@ public abstract class PlayerListMixin {
             ServerPlayer oldPlayer,
             boolean alive
     ) {
-        if (oldPlayer instanceof EntityPlayerMPFake) {
-            return EntityPlayerMPFake.respawnFake(this.server, level, profile, cli);
+        if (oldPlayer instanceof FakePlayer) {
+            return FakePlayer.respawnFake(this.server, level, profile, cli);
         }
         return new ServerPlayer(this.server, level, profile, cli);
     }

@@ -1,7 +1,7 @@
 package hero.bane.pvpbot.mixin;
 
 import hero.bane.pvpbot.PVPBotSettings;
-import hero.bane.pvpbot.fakeplayer.EntityPlayerMPFake;
+import hero.bane.pvpbot.fakeplayer.FakePlayer;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -11,7 +11,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.BlocksAttacks;
 import net.minecraft.world.level.Level;
-import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -63,15 +62,16 @@ public abstract class PlayerMixin extends LivingEntity {
     }
 
     @Redirect(
-            method = "attack",
+            method = "causeExtraKnockback",
             at = @At(
                     value = "FIELD",
                     target = "Lnet/minecraft/world/entity/Entity;hurtMarked:Z",
-                    ordinal = 0,
-                    opcode = Opcodes.GETFIELD)
+                    ordinal = 0
+            )
     )
-    private boolean velocityModifiedAndNotCarpetFakePlayer(Entity target) {
-        return target.hurtMarked && !(target instanceof EntityPlayerMPFake);
+    private boolean velocityModifiedAndNotCarpetFakePlayer(Entity target)
+    {
+        return target.hurtMarked && !(target instanceof FakePlayer);
     }
 
     @Inject(method = "blockUsingItem", at = @At("HEAD"))

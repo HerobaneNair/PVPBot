@@ -17,6 +17,7 @@
     "PlayerMixin",
     "RideCommandMixin",
     "ServerExplosionMixin",
+    "ServerPlayerAccessor",
     "ServerPlayerMixin",
     "ShulkerBoxBlockEntityMixin",
     "StandingAndWallBlockItemMixin"
