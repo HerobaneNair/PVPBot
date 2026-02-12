@@ -286,6 +286,8 @@ public class FakePlayer extends ServerPlayer {
             return false;
         } else if (damageSource.is(DamageTypeTags.IS_FIRE) && this.hasEffect(MobEffects.FIRE_RESISTANCE)) {
             return false;
+        } else if (damageSource.is(DamageTypeTags.IS_EXPLOSION)) {
+            return super.hurtServer(serverLevel, damageSource, finalDamage);
         } else {
             if (this.isSleeping()) {
                 this.stopSleeping();
