@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public final class DelayedCommandData {
+public final class DelayedQueue {
 
     public static final class Entry {
         public final String id;
@@ -68,13 +68,13 @@ public final class DelayedCommandData {
         public static final MapCodec<Callback> CODEC = MapCodec.unit(() -> null);
 
         private final String id;
-        private final CommandSourceStack source;
+        private final UUID executor;
         private final String runnableThing;
         private final boolean isFunction;
 
-        public Callback(String id, CommandSourceStack source, String runnableThing, boolean isFunction) {
+        public Callback(String id, UUID executor, String runnableThing, boolean isFunction) {
             this.id = id;
-            this.source = source.withCallback(CommandResultCallback.EMPTY);
+            this.executor = executor;
             this.runnableThing = runnableThing;
             this.isFunction = isFunction;
         }
@@ -82,9 +82,13 @@ public final class DelayedCommandData {
         @Override
         public void handle(MinecraftServer server, @NonNull TimerQueue<MinecraftServer> queue, long time) {
             try {
-                if (source.getEntity() == null) {
+                var player = server.getPlayerList().getPlayer(executor);
+                if (player == null) {
                     return;
                 }
+
+                CommandSourceStack source = player.createCommandSourceStack()
+                        .withCallback(CommandResultCallback.EMPTY);
 
                 if (isFunction) {
                     server.getCommands().performPrefixedCommand(
@@ -97,8 +101,9 @@ public final class DelayedCommandData {
                             runnableThing
                     );
                 }
+
             } finally {
-                DelayedCommandData.removeById(id);
+                DelayedQueue.removeById(id);
             }
         }
 

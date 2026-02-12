@@ -17,11 +17,12 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.decoration.ItemFrame;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.KineticWeapon;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.item.*;
 import net.minecraft.world.phys.*;
+import net.minecraft.world.item.component.KineticWeapon;
 
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -298,6 +299,118 @@ public class FakePlayerActionPack {
     }
 
     public enum ActionType {
+//        USE(true) {
+//            @Override
+//            boolean execute(ServerPlayer player, Action action) {
+//                FakePlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
+//
+//                if (ap.itemUseCooldown > 0) {
+//                    ap.itemUseCooldown--;
+//                    return true;
+//                }
+//
+//                if (player.isUsingItem()) {
+//                    return true;
+//                }
+//
+//                ItemStack stack = player.getMainHandItem();
+//                boolean isSpear = stack.has(DataComponents.KINETIC_WEAPON);
+//                HitResult hit = isSpear ? getSpearTarget(player) : getTarget(player);
+//
+//                for (InteractionHand hand : InteractionHand.values()) {
+//                    switch (hit.getType()) {
+//                        case BLOCK: {
+//                            player.resetLastActionTime();
+//                            ServerLevel world = player.level().getLevel();
+//                            BlockHitResult blockHit = (BlockHitResult) hit;
+//                            BlockPos pos = blockHit.getBlockPos();
+//                            Direction side = blockHit.getDirection();
+//
+//                            if (pos.getY() < player.level().getMaxY() - (side == Direction.UP ? 1 : 0)
+//                                    && world.mayInteract(player, pos)) {
+//
+//                                InteractionResult result =
+//                                        player.gameMode.useItemOn(player, world, player.getItemInHand(hand), hand, blockHit);
+//
+//                                player.swing(hand);
+//
+//                                if (result instanceof InteractionResult.Success) {
+//                                    ap.itemUseCooldown = 3;
+//                                    return true;
+//                                }
+//                            }
+//                            break;
+//                        }
+//
+//                        case ENTITY: {
+//                            player.resetLastActionTime();
+//                            EntityHitResult entityHit = (EntityHitResult) hit;
+//                            Entity entity = entityHit.getEntity();
+//
+//                            boolean handWasEmpty = player.getItemInHand(hand).isEmpty();
+//                            boolean itemFrameEmpty =
+//                                    entity instanceof ItemFrame && ((ItemFrame) entity).getItem().isEmpty();
+//
+//                            Vec3 relativeHitPos =
+//                                    entityHit.getLocation().subtract(entity.getX(), entity.getY(), entity.getZ());
+//
+//                            if (entity.interactAt(player, relativeHitPos, hand).consumesAction()) {
+//                                ap.itemUseCooldown = 3;
+//                                return true;
+//                            }
+//
+//                            if (player.interactOn(entity, hand).consumesAction()
+//                                    && !(handWasEmpty && itemFrameEmpty)) {
+//
+//                                ap.itemUseCooldown = 3;
+//                                return true;
+//                            }
+//                            break;
+//                        }
+//                    }
+//
+//                    if (player.gameMode.useItem(player, player.level(), stack, hand).consumesAction()) {
+        /// /                        if (stack.has(DataComponents.KINETIC_WEAPON) && !player.isUsingItem()) {
+        /// /                            player.startUsingItem(hand);
+        /// /                        }
+//
+//                        ap.itemUseCooldown = 3;
+//                        return true;
+//                    }
+//                }
+//
+//                return false;
+//            }
+//
+//            @Override
+//            void inactiveTick(ServerPlayer player, Action action) {
+//                FakePlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
+//
+//                if (!player.isUsingItem()) {
+//                    ap.itemUseCooldown = 0;
+//                    return;
+//                }
+//
+//                ItemStack stack = player.getUseItem();
+//                if (!stack.has(DataComponents.KINETIC_WEAPON)) {
+//                    return;
+//                }
+//
+//                KineticWeapon kinetic = stack.get(DataComponents.KINETIC_WEAPON);
+//                if (kinetic == null) {
+//                    return;
+//                }
+//
+//                int remaining = player.getUseItemRemainingTicks();
+//
+//                EquipmentSlot slot =
+//                        player.getUsedItemHand() == InteractionHand.OFF_HAND
+//                                ? EquipmentSlot.OFFHAND
+//                                : EquipmentSlot.MAINHAND;
+//
+//                kinetic.damageEntities(stack, remaining, player, slot);
+//            }
+//        },
         USE(true) {
             @Override
             boolean execute(ServerPlayer player, Action action) {
@@ -314,9 +427,18 @@ public class FakePlayerActionPack {
 
                 ItemStack stack = player.getMainHandItem();
                 boolean isSpear = stack.has(DataComponents.KINETIC_WEAPON);
-                HitResult hit = isSpear ? getSpearTarget(player) : getTarget(player);
 
                 for (InteractionHand hand : InteractionHand.values()) {
+
+                    if (isSpear) {
+                        player.startUsingItem(hand);
+                        player.resetLastActionTime();
+                        ap.itemUseCooldown = 3;
+                        return true;
+                    }
+
+                    HitResult hit = getTarget(player);
+
                     switch (hit.getType()) {
                         case BLOCK: {
                             player.resetLastActionTime();
@@ -333,7 +455,7 @@ public class FakePlayerActionPack {
 
                                 player.swing(hand);
 
-                                if (result instanceof InteractionResult.Success) {
+                                if (result.consumesAction()) {
                                     ap.itemUseCooldown = 3;
                                     return true;
                                 }
@@ -369,10 +491,6 @@ public class FakePlayerActionPack {
                     }
 
                     if (player.gameMode.useItem(player, player.level(), stack, hand).consumesAction()) {
-//                        if (stack.has(DataComponents.KINETIC_WEAPON) && !player.isUsingItem()) {
-//                            player.startUsingItem(hand);
-//                        }
-
                         ap.itemUseCooldown = 3;
                         return true;
                     }
@@ -570,7 +688,8 @@ public class FakePlayerActionPack {
             this.preventSpectator = preventSpectator;
         }
 
-        void start(ServerPlayer player, Action action) {}
+        void start(ServerPlayer player, Action action) {
+        }
 
         abstract boolean execute(ServerPlayer player, Action action);
 

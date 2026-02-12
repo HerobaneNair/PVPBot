@@ -3,7 +3,7 @@ package hero.bane.pvpbot.command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import hero.bane.pvpbot.util.delayer.DelayedCommandService;
+import hero.bane.pvpbot.util.delayer.DelayedManager;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -11,6 +11,8 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.item.FunctionArgument;
 import net.minecraft.server.commands.FunctionCommand;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.commands.arguments.*;
+import net.minecraft.server.commands.ExecuteCommand;
 
 public class DelayedCommand {
 
@@ -20,12 +22,13 @@ public class DelayedCommand {
                         .then(Commands.literal("tickDelay")
                                 .then(Commands.argument("ticks", IntegerArgumentType.integer(1))
                                         .then(Commands.literal("command")
-                                                .then(Commands.argument("command (don't add slash)", StringArgumentType.greedyString())
-                                                        .executes(ctx ->
-                                                                DelayedCommandService.scheduleCommand(
-                                                                        ctx.getSource(),
-                                                                        IntegerArgumentType.getInteger(ctx, "ticks"),
-                                                                        StringArgumentType.getString(ctx, "command")
+                                                .then(Commands.argument("command", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
+                                                        .executes(context1 ->
+                                                                DelayedManager.scheduleCommand(
+                                                                        context1.getSource(),
+                                                                        IntegerArgumentType.getInteger(context1, "ticks"),
+                                                                        com.mojang.brigadier.arguments.StringArgumentType.getString(context1, "command"
+                                                                        )
                                                                 )
                                                         )
                                                 )
@@ -34,7 +37,7 @@ public class DelayedCommand {
                                                 .then(Commands.argument("function", FunctionArgument.functions())
                                                         .suggests(FunctionCommand.SUGGEST_FUNCTION)
                                                         .executes(ctx ->
-                                                                DelayedCommandService.scheduleFunction(
+                                                                DelayedManager.scheduleFunction(
                                                                         ctx.getSource(),
                                                                         IntegerArgumentType.getInteger(ctx, "ticks"),
                                                                         FunctionArgument.getFunctionOrTag(ctx, "function")
@@ -48,14 +51,14 @@ public class DelayedCommand {
                         )
                         .then(Commands.literal("queue")
                                 .executes(ctx ->
-                                        DelayedCommandService.list(ctx.getSource(), null)
+                                        DelayedManager.list(ctx.getSource(), null)
                                 )
                                 .then(Commands.literal("entity")
                                         .then(Commands.argument("entity", EntityArgument.entity())
                                                 .executes(ctx -> {
                                                     int total = 0;
                                                     for (Entity e : EntityArgument.getEntities(ctx, "entity")) {
-                                                        total += DelayedCommandService.list(
+                                                        total += DelayedManager.list(
                                                                 ctx.getSource(),
                                                                 e.getUUID()
                                                         );
@@ -66,7 +69,7 @@ public class DelayedCommand {
                                         .executes(ctx -> {
                                             Entity self = ctx.getSource().getEntity();
                                             if (self == null) return 0;
-                                            return DelayedCommandService.list(
+                                            return DelayedManager.list(
                                                     ctx.getSource(),
                                                     self.getUUID()
                                             );
@@ -75,7 +78,7 @@ public class DelayedCommand {
                                 .then(Commands.literal("remove")
                                         .then(Commands.argument("index", IntegerArgumentType.integer(0))
                                                 .executes(ctx ->
-                                                        DelayedCommandService.remove(
+                                                        DelayedManager.remove(
                                                                 ctx.getSource(),
                                                                 IntegerArgumentType.getInteger(ctx, "index")
                                                         )
@@ -85,7 +88,7 @@ public class DelayedCommand {
                         )
                         .then(Commands.literal("clear")
                                 .executes(ctx ->
-                                        DelayedCommandService.clear(ctx.getSource())
+                                        DelayedManager.clear(ctx.getSource())
                                 )
                         )
         );
