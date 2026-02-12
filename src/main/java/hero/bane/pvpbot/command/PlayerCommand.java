@@ -7,12 +7,11 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import hero.bane.pvpbot.fakeplayer.FakePlayer;
 import hero.bane.pvpbot.fakeplayer.FakePlayerActionPack;
 import hero.bane.pvpbot.fakeplayer.FakePlayerActionPack.Action;
 import hero.bane.pvpbot.fakeplayer.FakePlayerActionPack.ActionType;
-import hero.bane.pvpbot.fakeplayer.FakePlayer;
 import hero.bane.pvpbot.fakeplayer.connection.ServerPlayerInterface;
-import hero.bane.pvpbot.path.PathTarget;
 import hero.bane.pvpbot.util.ItemCooldown;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
@@ -32,6 +31,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 import static net.minecraft.commands.Commands.argument;
@@ -44,7 +44,7 @@ public class PlayerCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext ctx) {
         dispatcher.register(
                 literal("player")
-                        .requires(s -> !s.isPlayer() || s.getServer().getPlayerList().isOp(s.getPlayer().nameAndId()))
+                        .requires(s -> !s.isPlayer() || s.getServer().getPlayerList().isOp(Objects.requireNonNull(s.getPlayer()).nameAndId()))
                         .then(argument("targets", EntityArgument.players())
 
                                 .then(literal("stop")

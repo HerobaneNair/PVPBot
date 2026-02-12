@@ -16,11 +16,8 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.vehicle.boat.Boat;
-import net.minecraft.world.entity.vehicle.minecart.Minecart;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.KineticWeapon;
 import net.minecraft.world.level.block.state.BlockState;
@@ -28,7 +25,6 @@ import net.minecraft.world.phys.*;
 
 import java.util.EnumMap;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class FakePlayerActionPack {
@@ -80,10 +76,8 @@ public class FakePlayerActionPack {
 
         Action previous = actions.remove(type);
         if (previous != null) type.stop(player, previous);
-        if (action != null) {
-            actions.put(type, action);
-            type.start(player, action);
-        }
+        actions.put(type, action);
+        type.start(player, action);
         return this;
     }
 
@@ -202,12 +196,12 @@ public class FakePlayerActionPack {
             }
 
             if (predictedY < 0) {
-                fakeFallDistance += -predictedY;
+                fakeFallDistance -= predictedY;
             } else {
                 fakeFallDistance = Math.max(0, fakeFallDistance - predictedY);
             }
         } else if (dy < 0) {
-            fakeFallDistance += -dy;
+            fakeFallDistance -= dy;
         } else {
             fakeFallDistance = 0;
         }
@@ -290,13 +284,13 @@ public class FakePlayerActionPack {
                 : entityHit;
     }
 
-    private void dropItemFromSlot(int slot, boolean dropAll) {
-        Inventory inv = player.getInventory();
-        if (!inv.getItem(slot).isEmpty())
-            player.drop(inv.removeItem(slot,
-                    dropAll ? inv.getItem(slot).getCount() : 1
-            ), false, true);
-    }
+//    private void dropItemFromSlot(int slot, boolean dropAll) {
+//        Inventory inv = player.getInventory();
+//        if (!inv.getItem(slot).isEmpty())
+//            player.drop(inv.removeItem(slot,
+//                    dropAll ? inv.getItem(slot).getCount() : 1
+//            ), false, true);
+//    }
 
     public void setSlot(int slot) {
         player.getInventory().setSelectedSlot(slot - 1);
@@ -321,7 +315,7 @@ public class FakePlayerActionPack {
                 ItemStack stack = player.getMainHandItem();
                 boolean isSpear = stack.has(DataComponents.KINETIC_WEAPON);
                 HitResult hit = isSpear ? getSpearTarget(player) : getTarget(player);
-                
+
                 for (InteractionHand hand : InteractionHand.values()) {
                     switch (hit.getType()) {
                         case BLOCK: {
@@ -425,7 +419,7 @@ public class FakePlayerActionPack {
                 switch (hit.getType()) {
                     case ENTITY: {
                         if (isSpear) {
-                            if (player.connection != null && player.getAttackStrengthScale(0.5F) >= 1.0F) {
+                            if (player.getAttackStrengthScale(0.5F) >= 1.0F) {
                                 player.connection.handlePlayerAction(
                                         new ServerboundPlayerActionPacket(
                                                 ServerboundPlayerActionPacket.Action.STAB,
@@ -576,8 +570,7 @@ public class FakePlayerActionPack {
             this.preventSpectator = preventSpectator;
         }
 
-        void start(ServerPlayer player, Action action) {
-        }
+        void start(ServerPlayer player, Action action) {}
 
         abstract boolean execute(ServerPlayer player, Action action);
 
