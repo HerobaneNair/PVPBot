@@ -21,11 +21,10 @@ public class StandingAndWallBlockItemMixin {
     ))
     private boolean canCreativePlayerPlace(
             LevelReader worldView, BlockState state, BlockPos pos, CollisionContext context,
-            BlockPlaceContext itemcontext
+            BlockPlaceContext itemContext
     ) {
-        Player player = itemcontext.getPlayer();
+        Player player = itemContext.getPlayer();
         if (PVPBotSettings.creativeNoClip && player != null && player.isCreative() && player.getAbilities().flying) {
-            // copy from canPlace
             VoxelShape voxelShape = state.getCollisionShape(worldView, pos, context);
             return voxelShape.isEmpty() || worldView.isUnobstructed(player, voxelShape.move(pos.getX(), pos.getY(), pos.getZ()));
 

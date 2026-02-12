@@ -30,6 +30,7 @@ public abstract class LivingEntityMixin extends Entity {
 
     @ModifyConstant(method = "travelInAir", constant = @Constant(floatValue = 0.91F), expect = 1)
     private float dragAir(float original) {
+        //creativeFlyDrag can be changed with the pvpbot command thing, ignore the yellow squiggly
         if (PVPBotSettings.creativeFlyDrag != 0.09 && (Object) this instanceof Player self) {
             if (self.getAbilities().flying && !onGround())
                 return (float) (1.0 - PVPBotSettings.creativeFlyDrag);
@@ -39,6 +40,7 @@ public abstract class LivingEntityMixin extends Entity {
 
     @Inject(method = "getFrictionInfluencedSpeed(F)F", at = @At("HEAD"), cancellable = true)
     private void flyingAltSpeed(float slipperiness, CallbackInfoReturnable<Float> cir) {
+        //creativeFlySpeed can be changed with the pvpbot command thing, ignore the yellow squiggly
         if (PVPBotSettings.creativeFlySpeed != 1.0D && (Object) this instanceof Player self) {
             if (self.getAbilities().flying && !onGround())
                 cir.setReturnValue(getFlyingSpeed() * (float) PVPBotSettings.creativeFlySpeed);
@@ -59,7 +61,6 @@ public abstract class LivingEntityMixin extends Entity {
     )
     private void modifyKnockback(Entity entity, DamageSource damageSource, CallbackInfoReturnable<Float> cir) {
         LivingEntity self = (LivingEntity) (Object) this;
-
         if (entity instanceof LivingEntity target && target.invulnerableTime < 20) {
             cir.setReturnValue(0.0F);
             return;

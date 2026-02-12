@@ -4,7 +4,10 @@ import com.mojang.authlib.GameProfile;
 import hero.bane.pvpbot.PVPBotSettings;
 import hero.bane.pvpbot.fakeplayer.connection.FakeClientConnection;
 import hero.bane.pvpbot.fakeplayer.connection.ServerPlayerInterface;
+import hero.bane.pvpbot.mixin.LivingEntityAccessor;
 import hero.bane.pvpbot.mixin.ServerPlayerAccessor;
+import it.unimi.dsi.fastutil.doubles.DoubleDoubleImmutablePair;
+import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.component.DataComponents;
@@ -24,15 +27,21 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.players.OldUsersConverter;
+import net.minecraft.stats.Stats;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.vehicle.boat.AbstractBoat;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrowableItemProjectile;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.BlocksAttacks;
@@ -244,6 +253,7 @@ public class FakePlayer extends ServerPlayer {
         this.hurt(this.level().damageSources().fellOutOfWorld(), Float.MAX_VALUE);
     }
 
+
     @Override
     public void tick() {
         if (this.level().getServer().getTickCount() % 10 == 0) {
@@ -252,6 +262,8 @@ public class FakePlayer extends ServerPlayer {
         }
         try {
             super.tick();
+
+            ((ServerPlayerInterface) this).getActionPack().onUpdate();
             this.doTick();
         } catch (NullPointerException ignored) {
             // happens with that paper port thingy - not sure what that would fix, but hey
@@ -259,20 +271,145 @@ public class FakePlayer extends ServerPlayer {
         }
     }
 
-//    @Override
-//    public boolean startRiding(Entity entityToRide, boolean force, boolean sendEventAndTriggers) {
-//        if (super.startRiding(entityToRide, force, sendEventAndTriggers)) {
-//            // from ClientPacketListener.handleSetEntityPassengersPacket
-//            if (entityToRide instanceof AbstractBoat) {
-//                this.yRotO = entityToRide.getYRot();
-//                this.setYRot(entityToRide.getYRot());
-//                this.setYHeadRot(entityToRide.getYRot());
-//            }
-//            return true;
-//        } else {
-//            return false;
-//        }
-//    }
+    @Override
+    public boolean hurtServer(ServerLevel serverLevel, DamageSource damageSource, float finalDamage) {
+        if (this.gameMode.getGameModeForPlayer() == GameType.CREATIVE || this.gameMode.getGameModeForPlayer() == GameType.SPECTATOR) {
+            return false;
+        }
+        if (damageSource.getDirectEntity() instanceof ThrowableItemProjectile) {
+            return false;
+        }
+        if (this.isInvulnerableTo(serverLevel, damageSource)) {
+            return false;
+        } else if (this.isDeadOrDying()) {
+            return false;
+        } else if (damageSource.is(DamageTypeTags.IS_FIRE) && this.hasEffect(MobEffects.FIRE_RESISTANCE)) {
+            return false;
+        } else {
+            if (this.isSleeping()) {
+                this.stopSleeping();
+            }
+
+            this.noActionTime = 0;
+            if (finalDamage < 0.0F) {
+                finalDamage = 0.0F;
+            }
+
+            float originalDamage = finalDamage;
+            float blockedDamage = this.applyItemBlocking(serverLevel, damageSource, finalDamage);
+            finalDamage -= blockedDamage;
+            boolean blocked = blockedDamage > 0.0F;
+            if (damageSource.is(DamageTypeTags.IS_FREEZING) && this.getType().is(EntityTypeTags.FREEZE_HURTS_EXTRA_TYPES)) {
+                finalDamage *= 5.0F;
+            }
+
+            if (damageSource.is(DamageTypeTags.DAMAGES_HELMET) && !this.getItemBySlot(EquipmentSlot.HEAD).isEmpty()) {
+                this.hurtHelmet(damageSource, finalDamage);
+                finalDamage *= 0.75F;
+            }
+
+            if (Float.isNaN(finalDamage) || Float.isInfinite(finalDamage)) {
+                finalDamage = Float.MAX_VALUE;
+            }
+
+            boolean cleanHit = true;
+            if ((float) this.invulnerableTime > 10.0F && !damageSource.is(DamageTypeTags.BYPASSES_COOLDOWN)) {
+                if (finalDamage <= this.lastHurt) {
+                    return false;
+                }
+
+                this.actuallyHurt(serverLevel, damageSource, finalDamage - this.lastHurt);
+                this.lastHurt = finalDamage;
+                cleanHit = false;
+            } else {
+                this.lastHurt = finalDamage;
+                this.invulnerableTime = 20;
+                this.actuallyHurt(serverLevel, damageSource, finalDamage);
+                this.hurtDuration = 10;
+                this.hurtTime = this.hurtDuration;
+            }
+
+            this.resolveMobResponsibleForDamage(damageSource);
+            this.resolvePlayerResponsibleForDamage(damageSource);
+            if (cleanHit) {
+                BlocksAttacks blocksAttacks = (BlocksAttacks) this.getUseItem().get(DataComponents.BLOCKS_ATTACKS);
+                if (blocked && blocksAttacks != null) {
+                    blocksAttacks.onBlocked(serverLevel, this);
+                } else {
+                    serverLevel.broadcastDamageEvent(this, damageSource);
+                }
+
+                if (!damageSource.is(DamageTypeTags.NO_IMPACT) && (!blocked || finalDamage > 0.0F)) {
+                    this.markHurt();
+                }
+
+                if (!damageSource.is(DamageTypeTags.NO_KNOCKBACK)) {
+                    double kb_x = 0.0d;
+                    double kb_z = 0.0d;
+                    Entity directEntity = damageSource.getDirectEntity();
+                    if (directEntity instanceof Projectile) {
+                        Projectile projectile = (Projectile) directEntity;
+                        DoubleDoubleImmutablePair kbVector = projectile.calculateHorizontalHurtKnockbackDirection(this, damageSource);
+                        kb_x = -kbVector.leftDouble();
+                        kb_z = -kbVector.rightDouble();
+                    } else if (damageSource.getSourcePosition() != null) {
+                        kb_x = damageSource.getSourcePosition().x() - this.getX();
+                        kb_z = damageSource.getSourcePosition().z() - this.getZ();
+                    }
+
+                    if (!blocked) {
+                        this.knockback(0.4d, kb_x, kb_z);
+                        this.indicateDamage(kb_x, kb_z);
+                    }
+                }
+            }
+
+            if (this.isDeadOrDying()) {
+                try {
+                    if (!((LivingEntityAccessor) this).invokeCheckTotemDeathProtection(damageSource)) {
+                        if (cleanHit) {
+                            this.makeSound(this.getDeathSound());
+                            ((LivingEntityAccessor) this).invokePlaySecondaryHurtSound(damageSource);
+                        }
+
+                        this.die(damageSource);
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+
+            } else if (cleanHit && (!PVPBotSettings.shieldStunning || !blocked)) {
+                this.playHurtSound(damageSource);
+                ((LivingEntityAccessor) this).invokePlaySecondaryHurtSound(damageSource);
+            }
+
+            boolean damageExists = !blocked || finalDamage > 0.0F;
+            if (damageExists) {
+                ((LivingEntityAccessor) this).setLastDamageSource(damageSource);
+                ((LivingEntityAccessor) this).setLastDamageStamp(this.level().getGameTime());
+
+                for (MobEffectInstance mobEffectInstance : this.getActiveEffects()) {
+                    mobEffectInstance.onMobHurt(serverLevel, this, damageSource, finalDamage);
+                }
+            }
+
+            if (this instanceof ServerPlayer) {
+                ServerPlayer serverPlayer = this;
+                CriteriaTriggers.ENTITY_HURT_PLAYER.trigger(serverPlayer, damageSource, originalDamage, finalDamage, blocked);
+                if (blockedDamage > 0.0F && blockedDamage < 3.4028235E37F) {
+                    serverPlayer.awardStat(Stats.DAMAGE_BLOCKED_BY_SHIELD, Math.round(blockedDamage * 10.0F));
+                }
+            }
+
+            Entity attackingEntity = damageSource.getEntity();
+            if (attackingEntity instanceof ServerPlayer serverPlayer) {
+                CriteriaTriggers.PLAYER_HURT_ENTITY.trigger(serverPlayer, this, damageSource, originalDamage, finalDamage, blocked);
+            }
+
+            return damageExists;
+        }
+    }
+
 
     private void shakeOff() {
         if (getVehicle() instanceof Player) stopRiding();

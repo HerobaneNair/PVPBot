@@ -12,6 +12,7 @@ import hero.bane.pvpbot.fakeplayer.FakePlayerActionPack.Action;
 import hero.bane.pvpbot.fakeplayer.FakePlayerActionPack.ActionType;
 import hero.bane.pvpbot.fakeplayer.FakePlayer;
 import hero.bane.pvpbot.fakeplayer.connection.ServerPlayerInterface;
+import hero.bane.pvpbot.path.PathTarget;
 import hero.bane.pvpbot.util.ItemCooldown;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
@@ -77,13 +78,6 @@ public class PlayerCommand {
                                         .executes(PlayerCommand::kill))
                                 .then(literal("disconnect")
                                         .executes(PlayerCommand::disconnect))
-
-//                                .then(literal("mount")
-//                                        .executes(manipulation(ap -> ap.mount(true)))
-//                                        .then(literal("anything")
-//                                                .executes(manipulation(ap -> ap.mount(false)))))
-//                                .then(literal("dismount")
-//                                        .executes(manipulation(FakePlayerActionPack::dismount)))
 
                                 .then(literal("sneak")
                                         .executes(manipulation(ap -> ap.setSneaking(true))))

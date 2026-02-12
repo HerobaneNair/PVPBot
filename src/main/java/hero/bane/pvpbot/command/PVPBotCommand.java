@@ -2,7 +2,6 @@ package hero.bane.pvpbot.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import hero.bane.pvpbot.PVPBot;
 import hero.bane.pvpbot.rule.RuleCommandBuilder;
 import net.fabricmc.loader.api.FabricLoader;
@@ -23,7 +22,7 @@ public final class PVPBotCommand {
         );
     }
 
-    private static int version(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+    private static int version(CommandContext<CommandSourceStack> context) {
         String pvpBotVersion = FabricLoader.getInstance()
                 .getModContainer("pvpbot")
                 .get().getMetadata().getVersion().getFriendlyString();
@@ -31,10 +30,10 @@ public final class PVPBotCommand {
         int versionReturned = 0;
 
         try {
-            versionReturned = Integer.parseInt(pvpBotVersion.substring(pvpBotVersion.indexOf('-') + 1, pvpBotVersion.indexOf('+')).replaceAll("\\.",""));
+            versionReturned = Integer.parseInt(pvpBotVersion.substring(pvpBotVersion.indexOf('-') + 1, pvpBotVersion.indexOf('+')).replaceAll("\\.", ""));
         } catch (Exception e) {
             context.getSource().sendSuccess(() -> Component.literal(versionProblems).withColor(0xFF5555), false);
-            PVPBot.LOGGER.error(versionProblems,e);
+            PVPBot.LOGGER.error(versionProblems, e);
         }
 
         context.getSource().sendSuccess(() -> Component.literal("PVPBotVersion: " + pvpBotVersion), false);

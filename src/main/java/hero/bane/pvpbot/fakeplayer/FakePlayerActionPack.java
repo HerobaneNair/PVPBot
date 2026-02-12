@@ -169,48 +169,6 @@ public class FakePlayerActionPack {
         return stopMovement();
     }
 
-    //Mounting Stuff
-    /*
-
-    public FakePlayerActionPack mount(boolean onlyRideables) {
-
-        List<Entity> entities;
-        if (onlyRideables) {
-            entities = player.level().getEntities(player, player.getBoundingBox().inflate(3.0D, 1.0D, 3.0D),
-                    e -> e instanceof Minecart || e instanceof Boat || e instanceof AbstractHorse);
-        } else {
-            entities = player.level().getEntities(player, player.getBoundingBox().inflate(3.0D, 1.0D, 3.0D));
-        }
-        if (entities.isEmpty())
-            return this;
-        Entity closest = null;
-        double distance = Double.POSITIVE_INFINITY;
-        Entity currentVehicle = player.getVehicle();
-        for (Entity e : entities) {
-            if (e == player || (currentVehicle == e))
-                continue;
-            double dd = player.distanceToSqr(e);
-            if (dd < distance) {
-                distance = dd;
-                closest = e;
-            }
-        }
-        if (closest == null) return this;
-        if (closest instanceof AbstractHorse && onlyRideables)
-            ((AbstractHorse) closest).mobInteract(player, InteractionHand.MAIN_HAND);
-        else
-            player.startRiding(closest);
-        return this;
-    }
-     */
-    /*
-    public FakePlayerActionPack dismount() {
-        player.stopRiding();
-        return this;
-    }
-
-     */
-
     public void onUpdate() {
 
         double y = player.getY();

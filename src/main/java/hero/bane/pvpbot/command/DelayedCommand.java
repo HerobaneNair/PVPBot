@@ -19,7 +19,6 @@ public class DelayedCommand {
                 Commands.literal("delayed")
                         .then(Commands.literal("tickDelay")
                                 .then(Commands.argument("ticks", IntegerArgumentType.integer(1))
-
                                         .then(Commands.literal("command")
                                                 .then(Commands.argument("command (don't add slash)", StringArgumentType.greedyString())
                                                         .executes(ctx ->
@@ -31,7 +30,6 @@ public class DelayedCommand {
                                                         )
                                                 )
                                         )
-
                                         .then(Commands.literal("function")
                                                 .then(Commands.argument("function", FunctionArgument.functions())
                                                         .suggests(FunctionCommand.SUGGEST_FUNCTION)
@@ -48,12 +46,10 @@ public class DelayedCommand {
                                         )
                                 )
                         )
-
                         .then(Commands.literal("queue")
                                 .executes(ctx ->
                                         DelayedCommandService.list(ctx.getSource(), null)
                                 )
-
                                 .then(Commands.literal("entity")
                                         .then(Commands.argument("entity", EntityArgument.entity())
                                                 .executes(ctx -> {
@@ -76,7 +72,6 @@ public class DelayedCommand {
                                             );
                                         })
                                 )
-
                                 .then(Commands.literal("remove")
                                         .then(Commands.argument("index", IntegerArgumentType.integer(0))
                                                 .executes(ctx ->
@@ -88,7 +83,6 @@ public class DelayedCommand {
                                         )
                                 )
                         )
-
                         .then(Commands.literal("clear")
                                 .executes(ctx ->
                                         DelayedCommandService.clear(ctx.getSource())

@@ -17,8 +17,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class ServerPlayerMixin implements ServerPlayerInterface {
     @Unique
     public FakePlayerActionPack actionPack;
-    @Unique
-    public boolean invalidEntityObject;
 
     @Override
     public FakePlayerActionPack getActionPack() {
