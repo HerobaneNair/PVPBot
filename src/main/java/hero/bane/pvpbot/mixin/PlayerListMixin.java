@@ -2,7 +2,7 @@ package hero.bane.pvpbot.mixin;
 
 import com.mojang.authlib.GameProfile;
 import hero.bane.pvpbot.fakeplayer.FakePlayer;
-import hero.bane.pvpbot.fakeplayer.FakePlayerNetHandler;
+import hero.bane.pvpbot.fakeplayer.connection.FakePlayerNetHandler;
 import net.minecraft.network.Connection;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ClientInformation;

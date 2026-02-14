@@ -101,7 +101,6 @@ public final class DelayedQueue {
                             runnableThing
                     );
                 }
-
             } finally {
                 DelayedQueue.removeById(id);
             }
