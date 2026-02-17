@@ -1,6 +1,7 @@
 package hero.bane.pvpbot.util.delayer;
 
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
@@ -24,29 +25,35 @@ public final class DelayedManager {
         String id = UUID.randomUUID().toString();
         long executeAt = source.getLevel().getGameTime() + ticks;
 
-        UUID executor = source.getEntity() != null
-                ? source.getEntity().getUUID()
-                : new UUID(0L, 0L);
+        DelayedQueue.ExecutorData executorData;
+
+        if (source.getEntity() != null) {
+            executorData = DelayedQueue.ExecutorData.player(source.getEntity().getUUID());
+        } else if (source.getLevel() instanceof ServerLevel level) {
+            executorData = DelayedQueue.ExecutorData.commandBlock(
+                    level.dimension(),
+                    BlockPos.containing(source.getPosition())
+            );
+        } else {
+            executorData = DelayedQueue.ExecutorData.console();
+        }
 
         DelayedQueue.add(
-                new DelayedQueue.Entry(id, executor, payload, isFunction, executeAt)
+                new DelayedQueue.Entry(id, executorData, payload, isFunction, executeAt)
         );
-
-        source.getServer()
-                .getWorldData()
-                .overworldData()
-                .getScheduledEvents()
-                .schedule(id, executeAt, new DelayedQueue.Callback(id, executor, payload, isFunction));
 
         return 1;
     }
 
     public static int list(CommandSourceStack source, UUID filter) {
+
         ServerLevel level = source.getLevel();
         List<DelayedQueue.Entry> entries =
-                filter == null ? DelayedQueue.snapshot() : DelayedQueue.snapshot(filter);
+                filter == null ? DelayedQueue.snapshot()
+                        : DelayedQueue.snapshotPlayer(filter);
 
-        source.sendSuccess(() -> Component.literal("/delayed queue:\n" + (entries.isEmpty() ? " (Empty)" : "")), false);
+        source.sendSuccess(() ->
+                Component.literal("/delayed queue:\n" + (entries.isEmpty() ? " (Empty)" : "")), false);
 
         for (int i = 0; i < entries.size(); i++) {
 
@@ -58,7 +65,7 @@ public final class DelayedManager {
 
             source.sendSuccess(() ->
                             Component.literal("")
-                                    .append(Component.literal("UUID: " + e.executor))
+                                    .append(Component.literal("Executor: " + e.executor.type))
                                     .append(Component.literal("\nPayload: " + e.payload))
                                     .append(Component.literal("\nRemaining: " + ticks + " ticks [" + seconds + "s]"))
                                     .append(Component.literal("\nClick to copy remove")
@@ -86,12 +93,6 @@ public final class DelayedManager {
 
         DelayedQueue.Entry removed = DelayedQueue.remove(index);
 
-        source.getServer()
-                .getWorldData()
-                .overworldData()
-                .getScheduledEvents()
-                .remove(removed.id);
-
         source.sendSuccess(() -> Component.literal("Removed: " + removed.payload), false);
 
         return 1;
@@ -99,18 +100,10 @@ public final class DelayedManager {
 
     public static int clear(CommandSourceStack source) {
 
-        List<DelayedQueue.Entry> entries = DelayedQueue.snapshot();
-
-        for (DelayedQueue.Entry e : entries) {
-            source.getServer()
-                    .getWorldData()
-                    .overworldData()
-                    .getScheduledEvents()
-                    .remove(e.id);
-        }
-
         int count = DelayedQueue.clearAndReturnCount();
-        source.sendSuccess(() -> Component.literal(count + " delayed payloads removed"), false);
+
+        source.sendSuccess(() ->
+                Component.literal(count + " delayed payloads removed"), false);
 
         return count;
     }
