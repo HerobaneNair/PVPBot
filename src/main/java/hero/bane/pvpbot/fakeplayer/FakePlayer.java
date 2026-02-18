@@ -75,7 +75,7 @@ public class FakePlayer extends ServerPlayer {
     public Vec3 spawnPos;
     public double spawnYaw;
 
-    // Returns true if it was successful, false if couldn't spawn due to the player not existing in Mojang servers
+    // Returns true if it was successful, false if it couldn't spawn due to the player not existing in Mojang servers
     public static boolean createFake(String username, MinecraftServer server, Vec3 pos, double yaw, double pitch, ResourceKey<Level> dimensionId, GameType gamemode, boolean flying) {
         //prolly half of that crap is not necessary, but it works
         ServerLevel worldIn = server.getLevel(dimensionId);
@@ -264,7 +264,7 @@ public class FakePlayer extends ServerPlayer {
         try {
             super.tick();
 
-            ((ServerPlayerInterface) this).getActionPack().onUpdate();
+//            ((ServerPlayerInterface) this).getActionPack().onUpdate();
             this.doTick();
         } catch (NullPointerException ignored) {
             // happens with that paper port thingy - not sure what that would fix, but hey
