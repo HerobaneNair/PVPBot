@@ -1,8 +1,11 @@
 package hero.bane.pvpbot.command;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.context.StringRange;
+import com.mojang.brigadier.suggestion.Suggestion;
+import com.mojang.brigadier.suggestion.Suggestions;
 import hero.bane.pvpbot.util.delayer.DelayedManager;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
@@ -11,8 +14,9 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.item.FunctionArgument;
 import net.minecraft.server.commands.FunctionCommand;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.commands.arguments.*;
-import net.minecraft.server.commands.ExecuteCommand;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class DelayedCommand {
 
@@ -23,6 +27,42 @@ public class DelayedCommand {
                                 .then(Commands.argument("ticks", IntegerArgumentType.integer(1))
                                         .then(Commands.literal("command")
                                                 .then(Commands.argument("command", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
+                                                        //Incredibly annoying to figure out
+                                                        .suggests((c, b) -> {
+                                                            String remaining = b.getRemaining();
+                                                            ParseResults<CommandSourceStack> parse =
+                                                                    dispatcher.parse(remaining, c.getSource());
+                                                            return dispatcher.getCompletionSuggestions(parse)
+                                                                    .thenApply(suggestions -> {
+
+                                                                        if (suggestions.isEmpty()) {
+                                                                            return suggestions;
+                                                                        }
+
+                                                                        int offset = b.getStart();
+                                                                        StringRange originalRange = suggestions.getRange();
+
+                                                                        StringRange shifted =
+                                                                                new StringRange(
+                                                                                        originalRange.getStart() + offset,
+                                                                                        originalRange.getEnd() + offset
+                                                                                );
+
+                                                                        List<Suggestion> shiftedSuggestions = suggestions.getList().stream()
+                                                                                .map(s -> new Suggestion(
+                                                                                        new StringRange(
+                                                                                                s.getRange().getStart() + offset,
+                                                                                                s.getRange().getEnd() + offset
+                                                                                        ),
+                                                                                        s.getText(),
+                                                                                        s.getTooltip()
+                                                                                ))
+                                                                                .collect(Collectors.toList());
+
+                                                                        return new Suggestions(shifted, shiftedSuggestions);
+                                                                    });
+                                                        })
+
                                                         .executes(context1 ->
                                                                 DelayedManager.scheduleCommand(
                                                                         context1.getSource(),

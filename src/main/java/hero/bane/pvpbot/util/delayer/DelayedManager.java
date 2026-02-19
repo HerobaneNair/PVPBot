@@ -63,12 +63,13 @@ public final class DelayedManager {
             double seconds = ticks / 20.0;
             String delete = "/delayed queue remove " + i;
 
+            int finalI = i; //I don't understand but sure
             source.sendSuccess(() ->
-                            Component.literal("")
-                                    .append(Component.literal("Executor: " + e.executor.type))
-                                    .append(Component.literal("\nPayload: " + e.payload))
-                                    .append(Component.literal("\nRemaining: " + ticks + " ticks [" + seconds + "s]"))
-                                    .append(Component.literal("\nClick to copy remove")
+                            Component.literal(finalI + ":\n")
+                                    .append(Component.literal("Executor: " + e.executor.type).withColor(0xCCFFCC))
+                                    .append(Component.literal("\n" + (e.isFunction ? "Function: " : "Command: ") + e.payload).withColor(0xFFFFCC))
+                                    .append(Component.literal("\nRemaining: " + ticks + " ticks [" + seconds + "s]").withColor(0xFFE0CC))
+                                    .append(Component.literal("\nClick to copy remove").withColor(0xFFCCCC)
                                             .withStyle(style ->
                                                     style.withClickEvent(new ClickEvent.SuggestCommand(delete))
                                                             .withHoverEvent(new HoverEvent.ShowText(Component.literal(delete)))
