@@ -28,7 +28,7 @@ public final class DelayedManager {
         DelayedQueue.ExecutorData executorData;
 
         if (source.getEntity() != null) {
-            executorData = DelayedQueue.ExecutorData.player(source.getEntity().getUUID());
+            executorData = DelayedQueue.ExecutorData.entity(source.getEntity().getUUID());
         } else if (source.getLevel() instanceof ServerLevel level) {
             executorData = DelayedQueue.ExecutorData.commandBlock(
                     level.dimension(),
@@ -63,11 +63,49 @@ public final class DelayedManager {
             double seconds = ticks / 20.0;
             String delete = "/delayed queue remove " + i;
 
-            int finalI = i; //I don't understand but sure
+            Component executorComponent;
+
+            if (e.executor().type == DelayedQueue.ExecutorType.ENTITY) {
+
+                String uuid = e.executor().entity.toString();
+                String tpCommand = "/tp " + uuid;
+
+                executorComponent = Component.literal("Executor: Entity")
+                        .withColor(0xCCFFCC)
+                        .withStyle(style -> style
+                                .withHoverEvent(new HoverEvent.ShowText(
+                                        Component.literal("UUID: " + uuid)
+                                ))
+                                .withClickEvent(new ClickEvent.SuggestCommand(tpCommand))
+                        );
+
+            } else if (e.executor().type == DelayedQueue.ExecutorType.COMMAND_BLOCK) {
+
+                BlockPos pos = e.executor().pos;
+                String coords = pos.getX() + " " + pos.getY() + " " + pos.getZ();
+                String tpCommand = "/tp @s " + coords;
+
+                executorComponent = Component.literal("Executor: Command Block")
+                        .withColor(0xCCFFCC)
+                        .withStyle(style -> style
+                                .withHoverEvent(new HoverEvent.ShowText(
+                                        Component.literal("Coords: " + coords)
+                                ))
+                                .withClickEvent(new ClickEvent.SuggestCommand(tpCommand))
+                        );
+
+            } else {
+
+                executorComponent = Component.literal("Executor: Console")
+                        .withColor(0xCCFFCC);
+            }
+
+            int finalI = i;
+
             source.sendSuccess(() ->
                             Component.literal(finalI + ":\n")
-                                    .append(Component.literal("Executor: " + e.executor.type).withColor(0xCCFFCC))
-                                    .append(Component.literal("\n" + (e.isFunction ? "Function: " : "Command: ") + e.payload).withColor(0xFFFFCC))
+                                    .append(executorComponent)
+                                    .append(Component.literal("\n" + (e.isFunction() ? "Function: " : "Command: ") + e.payload()).withColor(0xFFFFCC))
                                     .append(Component.literal("\nRemaining: " + ticks + " ticks [" + seconds + "s]").withColor(0xFFE0CC))
                                     .append(Component.literal("\nClick to copy remove").withColor(0xFFCCCC)
                                             .withStyle(style ->
@@ -94,7 +132,7 @@ public final class DelayedManager {
 
         DelayedQueue.Entry removed = DelayedQueue.remove(index);
 
-        source.sendSuccess(() -> Component.literal("Removed: " + removed.payload), false);
+        source.sendSuccess(() -> Component.literal("Removed: " + removed.payload()), false);
 
         return 1;
     }
