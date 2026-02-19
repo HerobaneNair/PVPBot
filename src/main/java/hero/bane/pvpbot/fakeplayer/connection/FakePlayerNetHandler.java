@@ -1,5 +1,6 @@
-package hero.bane.pvpbot.fakeplayer;
+package hero.bane.pvpbot.fakeplayer.connection;
 
+import hero.bane.pvpbot.fakeplayer.FakePlayer;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;

@@ -78,7 +78,7 @@ public abstract class PlayerMixin extends LivingEntity {
     private void onShieldDisabled(ServerLevel serverLevel, LivingEntity livingEntity, CallbackInfo ci) {
         var canDisableShield = false;
         ItemStack itemStack = this.getItemBlockingWith();
-        BlocksAttacks blocksAttacks = itemStack != null ? (BlocksAttacks) itemStack.get(DataComponents.BLOCKS_ATTACKS) : null;
+        BlocksAttacks blocksAttacks = itemStack != null ? itemStack.get(DataComponents.BLOCKS_ATTACKS) : null;
         float f = livingEntity.getSecondsToDisableBlocking();
         if (f > 0.0F && blocksAttacks != null) {
             canDisableShield = true;

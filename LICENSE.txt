@@ -1,42 +1,25 @@
-Creative Commons Attribution–NonCommercial 4.0 International License
-(CC BY-NC 4.0)
+PVPBot License (All Rights Reserved)
 
-Copyright (c) 2026 HerobaneNair
+Copyright © [HerobaneNair] [2026]
 
-This work is licensed under the Creative Commons Attribution–NonCommercial
-4.0 International License.
+All rights reserved.
+You may not redistribute, modify, or re-upload this mod without explicit written permission from the author.
 
-You are free to:
-- Share — copy and redistribute the material in any medium or format
-- Adapt — remix, transform, and build upon the material
+Permissions:
 
-Under the following terms:
-- Attribution — You must give appropriate credit to the original author.
-- NonCommercial — You may not use the material for commercial purposes.
+Videos:
+You are allowed to make and monetize videos using this mod.
 
-------------------------------------------------------------
-Additional Permission & Clarification (Addendum)
-------------------------------------------------------------
+Modpacks:
+You are allowed to include this mod in modpacks under the following conditions:
 
-1. Distribution of Modified Versions
-You are permitted to distribute modified or transformative versions of this
-work, provided that the resulting work is substantially different from the
-original and clearly credits the original author.
+Only monetization of the modpack through CurseForge or Modrinth is allowed (this includes sponsored links or banners in your modpack description), unless you have received written permission from me to monetize it elsewhere.
 
-2. Restriction on Redistribution of Original Work
-Redistribution, rehosting, or re-uploading of the original work, or any
-near-identical version of it, is not permitted without explicit prior
-permission from the original author.
+If the modpack is distributed outside of CurseForge and Modrinth, you must credit the PVPBot project by providing an easily accessible link to one of my official mod pages.
 
-3. Definition of “Near-Identical”
-A “near-identical” version is defined as a version that retains the core
-functionality, structure, or content of the original work with only trivial,
-cosmetic, or insubstantial changes.
+The name or description of the modpack must not be easily confused with the names or descriptions of PVPBot or my other projects.
 
-4. Reservation of Rights
-All rights not explicitly granted by this license are reserved by the author.
+If I have given you written permission to monetize the modpack outside of CurseForge and Modrinth, and I later request that you stop, you must comply and remove monetization outside those platforms.
 
-------------------------------------------------------------
-
-This license does not grant permission for uses that are prohibited by law
-or that require additional permissions from the author.
+Disclaimer:
+This mod is provided “as is” without any warranty of any kind. Use at your own risk.
